@@ -3,30 +3,40 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
+/**
+ * Contrôleur Authentification : Gère l'inscription, la connexion et la vérification d'identité.
+ */
 class AuthController extends Controller
 {
     /**
-     * Inscription multi-étape (Choix du rôle puis infos)
+     * Inscription (Register)
+     * Permet à un utilisateur de créer un compte en choisissant son rôle.
      */
     public function register(Request $request)
     {
+        // Validation des données entrantes
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-            'role_id' => 'required|in:2,3', // 2: client, 3: freelancer
+            'password' => 'required|string|min:8',
+            'role_id' => 'required|in:2,3', // 2: Client, 3: Freelancer
         ]);
 
-        $user = \App\Models\User::create([
+        // Création de l'utilisateur en base de données
+        $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => \Illuminate\Support\Facades\Hash::make($request->password),
+            'password' => Hash::make($request->password), // Chiffrage du mot de passe
             'role_id' => $request->role_id,
-            'verification_status' => 'pending',
+            'verification_status' => 'pending', // Statut initial en attente de vérification
         ]);
 
+        // Création d'un token (jeton) pour l'authentification immédiate
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
@@ -37,15 +47,26 @@ class AuthController extends Controller
     }
 
     /**
-     * Connexion
+     * Connexion (Login)
+     * Vérifie les identifiants et retourne un token si ils sont valides.
      */
     public function login(Request $request)
     {
-        if (!\Illuminate\Support\Facades\Auth::attempt($request->only('email', 'password'))) {
-            return response()->json(['message' => 'Invalid login details'], 401);
+        // Debug pour vérifier si l'utilisateur existe avant la tentative
+        $userExists = User::where('email', $request->email)->exists();
+        if (!$userExists) {
+            \Illuminate\Support\Facades\Log::warning("Connexion échouée : Utilisateur non trouvé [" . $request->email . "]");
         }
 
-        $user = \App\Models\User::where('email', $request['email'])->firstOrFail();
+        // Tentative de connexion via Laravel Auth
+        if (!Auth::attempt($request->only('email', 'password'))) {
+            return response()->json(['message' => 'Identifiants invalides (Vérifiez votre email ou mot de passe)'], 401);
+        }
+
+        // Récupération de l'utilisateur
+        $user = User::where('email', $request['email'])->firstOrFail();
+        
+        // Création du token
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
@@ -57,35 +78,41 @@ class AuthController extends Controller
 
     /**
      * Vérification d'identité (Upload de document)
+     * Le client ou freelance doit uploader sa CIN ou son Passeport pour validation.
      */
     public function verifyIdentity(Request $request)
     {
+        // Validation que le fichier est bien une image ou un PDF
         $request->validate([
-            'document' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048',
+            'document' => 'required|file|mimes:pdf,jpg,jpeg,png|max:4096',
         ]);
 
         $user = $request->user();
         
         if ($request->hasFile('document')) {
+            // Stockage du document dans le dossier 'public/id_documents'
             $path = $request->file('document')->store('id_documents', 'public');
+            
+            // Mise à jour de l'utilisateur
             $user->update([
                 'id_document_path' => $path,
-                'verification_status' => 'pending', // Re-soumission si déjà rejeté
+                'verification_status' => 'pending', // Attendre la validation par l'admin
             ]);
         }
 
         return response()->json([
-            'message' => 'Document uploaded successfully, waiting for admin approval.',
+            'message' => 'Document envoyé avec succès. En attente de validation par l’administrateur.',
             'user' => $user
         ]);
     }
 
     /**
-     * Déconnexion
+     * Déconnexion (Logout)
      */
     public function logout(Request $request)
     {
+        // Suppression du token actuel pour invalider la session
         $request->user()->currentAccessToken()->delete();
-        return response()->json(['message' => 'Logged out successfully']);
+        return response()->json(['message' => 'Déconnecté avec succès']);
     }
 }

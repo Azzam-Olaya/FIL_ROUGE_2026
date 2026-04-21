@@ -3,30 +3,43 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Category;
+use App\Models\Contract;
+use App\Models\Mission;
+use App\Models\User;
 use Illuminate\Http\Request;
 
+/**
+ * Contrôleur Admin : Outils de gestion globale de la plateforme, modération et statistiques.
+ */
 class AdminController extends Controller
 {
     /**
-     * Statistiques globales
+     * Statistiques globales (KPIs)
+     * Permet à l'admin de voir l'état de santé de la plateforme.
      */
     public function getStats()
     {
         return response()->json([
-            'total_missions' => \App\Models\Mission::count(),
-            'total_clients' => \App\Models\User::where('role_id', 2)->count(),
-            'total_freelancers' => \App\Models\User::where('role_id', 3)->count(),
-            'total_contracts' => \App\Models\Contract::count(),
+            'total_missions' => Mission::count(),
+            'total_clients' => User::where('role_id', 2)->count(),
+            'total_freelancers' => User::where('role_id', 3)->count(),
+            'total_contracts' => Contract::count(),
+            'sum_revenue_platform' => Contract::where('status', 'completed')->sum('commission'),
         ]);
     }
 
     /**
      * Liste des utilisateurs en attente de vérification
+     * Récupère ceux qui ont envoyé leurs documents mais ne sont pas encore validés.
      */
     public function getPendingUsers()
     {
         return response()->json(
-            \App\Models\User::where('verification_status', 'pending')->with('role')->get()
+            User::where('verification_status', 'pending')
+                ->whereNotNull('id_document_path')
+                ->with('role')
+                ->get()
         );
     }
 
@@ -35,29 +48,49 @@ class AdminController extends Controller
      */
     public function approveUser($id)
     {
-        $user = \App\Models\User::findOrFail($id);
+        $user = User::findOrFail($id);
         $user->update(['verification_status' => 'verified']);
-        return response()->json(['message' => 'User approved successfully']);
+        
+        return response()->json([
+            'message' => 'Identité de l’utilisateur validée avec succès.',
+            'user' => $user
+        ]);
     }
 
     /**
-     * Bannir un utilisateur
+     * Bannir un utilisateur (Signalement ou non-respect des règles)
      */
     public function banUser($id)
     {
-        $user = \App\Models\User::findOrFail($id);
-        // On pourrait ajouter une colonne 'is_banned'
+        $user = User::findOrFail($id);
+        
+        // On marque l'utilisateur comme banni
         $user->update(['verification_status' => 'banned']); 
-        return response()->json(['message' => 'User banned successfully']);
+        
+        return response()->json([
+            'message' => 'L’utilisateur a été banni de la plateforme.'
+        ]);
     }
 
     /**
-     * Gestion des catégories
+     * Gestion des catégories & sous-catégories
      */
     public function createCategory(Request $request)
     {
-        $request->validate(['name' => 'required|string|unique:categories']);
-        $category = \App\Models\Category::create($request->only('name', 'parent_id'));
-        return response()->json($category, 201);
+        // Validation simple
+        $request->validate([
+            'name' => 'required|string|unique:categories',
+            'parent_id' => 'nullable|exists:categories,id'
+        ]);
+
+        $category = Category::create([
+            'name' => $request->name,
+            'parent_id' => $request->parent_id
+        ]);
+
+        return response()->json([
+            'message' => 'Catégorie créée avec succès.',
+            'category' => $category
+        ], 201);
     }
 }

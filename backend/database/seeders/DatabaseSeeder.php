@@ -23,7 +23,7 @@ class DatabaseSeeder extends Seeder
         User::factory()->create([
             'name' => 'Admin User',
             'email' => 'admin@morlancer.com',
-            'password' => \Illuminate\Support\Facades\Hash::make('password'),
+            'password' => 'password',
             'role_id' => 1, // Admin
             'verification_status' => 'verified',
         ]);
