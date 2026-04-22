@@ -21,8 +21,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // Admin Routes
     Route::prefix('admin')->middleware('admin')->group(function () {
         Route::get('/stats', [AdminController::class, 'getStats']);
+        Route::get('/users', [AdminController::class, 'getUsers']);
         Route::get('/pending-users', [AdminController::class, 'getPendingUsers']);
         Route::post('/users/{id}/approve', [AdminController::class, 'approveUser']);
+        Route::post('/users/{id}/reject', [AdminController::class, 'rejectUser']);
         Route::post('/users/{id}/ban', [AdminController::class, 'banUser']);
         Route::post('/categories', [AdminController::class, 'createCategory']);
     });
