@@ -117,11 +117,7 @@ const handleRegister = async () => {
 
   try {
     const response = await axios.post('http://localhost:8000/api/register', form);
-    // Store token received from registration
-    if (response.data.token) {
-      localStorage.setItem('token', response.data.token);
-    }
-    // Redirect to verification form after successful registration
+    localStorage.setItem('token', response.data.access_token);
     router.push('/verify-identity');
   } catch (err) {
     const response = err.response?.data;
