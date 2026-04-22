@@ -98,18 +98,20 @@ class AuthController extends Controller
         // Validation que le fichier est bien une image ou un PDF
         $request->validate([
             'document' => 'required|file|mimes:pdf,jpg,jpeg,png|max:4096',
+            'id_number' => 'required|string|max:50',
+            'birthplace' => 'required|string|max:100',
         ]);
 
         $user = $request->user();
         
         if ($request->hasFile('document')) {
-            // Stockage du document dans le dossier 'public/id_documents'
             $path = $request->file('document')->store('id_documents', 'public');
             
-            // Mise à jour de l'utilisateur
             $user->update([
                 'id_document_path' => $path,
-                'verification_status' => 'pending', // Attendre la validation par l'admin
+                'id_number' => $request->id_number,
+                'birthplace' => $request->birthplace,
+                'verification_status' => 'pending',
             ]);
         }
 
