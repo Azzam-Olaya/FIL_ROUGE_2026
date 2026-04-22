@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -24,15 +25,21 @@ class AuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
-            'role_id' => 'required|in:2,3', // 2: Client, 3: Freelancer
+            'role_name' => 'required|in:client,freelancer', // 2: Client, 3: Freelancer
         ]);
+
+        // Récupération du rôle
+        $role = Role::where('name', $request->role_name)->first();
+        if (!$role) {
+            return response()->json(['error' => 'Rôle invalide'], 400);
+        }
 
         // Création de l'utilisateur en base de données
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password), // Chiffrage du mot de passe
-            'role_id' => $request->role_id,
+            'role_id' => $role->id,
             'verification_status' => 'pending', // Statut initial en attente de vérification
         ]);
 
@@ -63,9 +70,15 @@ class AuthController extends Controller
             return response()->json(['message' => 'Identifiants invalides (Vérifiez votre email ou mot de passe)'], 401);
         }
 
-        // Récupération de l'utilisateur
+        // Récupération de l'utilisateur avec sa relation Rôle
         $user = User::where('email', $request['email'])->firstOrFail();
-        
+        $user->load('role'); // Charger le rôle pour que role_name soit disponible
+
+        // Vérifier si l'utilisateur est vérifié
+        if ($user->verification_status !== 'verified') {
+            return response()->json(['message' => 'Votre compte est en attente de validation par un administrateur.'], 403);
+        }
+
         // Création du token
         $token = $user->createToken('auth_token')->plainTextToken;
 

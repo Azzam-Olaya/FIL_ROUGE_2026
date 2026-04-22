@@ -37,7 +37,6 @@ class AdminController extends Controller
     {
         return response()->json(
             User::where('verification_status', 'pending')
-                ->whereNotNull('id_document_path')
                 ->with('role')
                 ->get()
         );

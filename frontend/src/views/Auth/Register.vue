@@ -69,6 +69,13 @@
               {{ loading ? 'Création...' : 'Créer mon compte' }}
               <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">how_to_reg</span>
             </button>
+
+            <div v-if="errorMessage" class="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+              {{ errorMessage }}
+            </div>
+            <ul v-if="Object.keys(formErrors).length" class="mt-4 space-y-2 text-sm text-red-700">
+              <li v-for="(messages, field) in formErrors" :key="field">{{ messages[0] }}</li>
+            </ul>
           </form>
 
           <div class="mt-8 text-center border-t border-outline-variant/10 pt-8 w-full">
@@ -94,6 +101,8 @@ import axios from 'axios';
 
 const router = useRouter();
 const loading = ref(false);
+const errorMessage = ref('');
+const formErrors = ref({});
 const form = reactive({
   name: '',
   email: '',
@@ -103,12 +112,25 @@ const form = reactive({
 
 const handleRegister = async () => {
   loading.value = true;
+  errorMessage.value = '';
+  formErrors.value = {};
+
   try {
-    await axios.post('http://localhost:8000/api/register', form);
-    alert('Compte créé avec succès ! Connectez-vous.');
-    router.push('/login');
+    const response = await axios.post('http://localhost:8000/api/register', form);
+    // Store token received from registration
+    if (response.data.token) {
+      localStorage.setItem('token', response.data.token);
+    }
+    // Redirect to verification form after successful registration
+    router.push('/verify-identity');
   } catch (err) {
-    alert(err.response?.data?.message || 'Erreur lors de l’inscription');
+    const response = err.response?.data;
+    if (response?.errors) {
+      formErrors.value = response.errors;
+      errorMessage.value = response.message || 'La validation a échoué.';
+    } else {
+      errorMessage.value = response?.message || 'Erreur lors de l’inscription.';
+    }
   } finally {
     loading.value = false;
   }
