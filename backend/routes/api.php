@@ -33,6 +33,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('client')->group(function () {
         Route::post('/missions', [ClientController::class, 'storeMission']);
         Route::get('/missions', [ClientController::class, 'getMyMissions']);
+        Route::get('/stats', [ClientController::class, 'getStats']);
     });
 
     // Freelancer
