@@ -1,32 +1,7 @@
 <template>
   <div class="h-screen flex flex-col bg-surface font-body text-on-surface overflow-hidden relative">
-    <!-- TopNavBar -->
-    <header class="bg-surface/80 backdrop-blur-md flex justify-between items-center w-full px-8 py-4 sticky top-0 z-50 shadow-[0px_20px_40px_rgba(30,28,13,0.06)] border-b border-primary/5">
-      <div class="flex items-center gap-8">
-        <router-link to="/" class="flex items-center gap-2">
-          <span class="material-symbols-outlined text-primary text-3xl font-bold">auto_awesome</span>
-          <span class="font-headline font-black italic text-2xl text-primary tracking-tight">MorLancer</span>
-        </router-link>
-        <div class="relative hidden lg:block">
-          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
-          <input class="bg-surface-container-highest/50 border-none rounded-full py-2 pl-10 pr-4 text-xs w-64 focus:ring-2 focus:ring-primary/20 transition-all font-medium" placeholder="Rechercher une mission..." type="text"/>
-        </div>
-      </div>
-      <div class="flex items-center gap-6">
-        <div class="hidden md:flex gap-4">
-           <button class="p-2 rounded-full hover:bg-primary/10 transition-colors">
-             <span class="material-symbols-outlined text-on-surface-variant">favorite</span>
-           </button>
-           <button class="p-2 rounded-full hover:bg-primary/10 transition-colors relative">
-             <span class="material-symbols-outlined text-on-surface-variant">notifications</span>
-             <span class="absolute top-2 right-2 w-2 h-2 bg-secondary rounded-full"></span>
-           </button>
-        </div>
-        <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-primary/20 cursor-pointer">
-          S
-        </div>
-      </div>
-    </header>
+    <!-- TopNavBar Réutilisable -->
+    <TopNavBar />
 
     <div class="flex-1 flex overflow-hidden zellige-pattern relative">
       <!-- Sidebar / Conversations List -->
@@ -146,6 +121,7 @@
 
 <script setup>
 import { ref } from 'vue';
+import TopNavBar from '@/components/Common/TopNavBar.vue';
 
 const selectedChat = ref(null);
 const newMessage = ref('');

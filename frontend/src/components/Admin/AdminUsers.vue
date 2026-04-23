@@ -27,6 +27,7 @@
             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">N° CIN/Passeport</th>
             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Lieu de naissance</th>
             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Document</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Inscrit le</th>
             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Statut</th>
             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
           </tr>
@@ -44,6 +45,10 @@
                  target="_blank"
                  class="text-blue-600 underline text-sm">Voir document</a>
               <span v-else class="text-gray-400 text-sm">Aucun</span>
+            </td>
+            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
+              {{ formatDate(user.created_at) }}
+              <span v-if="isNew(user.created_at)" class="ml-1 bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Nouveau</span>
             </td>
             <td class="px-4 py-4 whitespace-nowrap">
               <span :class="getStatusClass(user.verification_status)" class="px-2 py-1 rounded-full text-xs font-bold">
@@ -69,7 +74,7 @@
             </td>
           </tr>
           <tr v-if="users.length === 0">
-            <td colspan="8" class="px-4 py-8 text-center text-gray-400">Aucun utilisateur trouvé.</td>
+            <td colspan="9" class="px-4 py-8 text-center text-gray-400">Aucun utilisateur trouvé.</td>
           </tr>
         </tbody>
       </table>
@@ -136,6 +141,10 @@ const getStatusText = (status) => ({
   rejected: 'Rejeté',
   banned: 'Banni',
 }[status] || status);
+
+const formatDate = (date) => new Date(date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+const isNew = (date) => (Date.now() - new Date(date).getTime()) < 48 * 60 * 60 * 1000;
 
 onMounted(loadUsers);
 </script>
