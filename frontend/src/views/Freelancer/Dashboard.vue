@@ -1,33 +1,34 @@
 <template>
-  <div class="min-h-screen bg-surface font-body text-on-surface flex overflow-x-hidden">
+  <div class="min-h-screen bg-surface font-body text-on-surface flex flex-col overflow-x-hidden">
+    <!-- TopNavBar Réutilisable -->
+    <TopNavBar />
+    <div class="flex flex-1 overflow-x-hidden">
     <!-- Barre Latérale (SideNavBar) : Navigation principale pour le Freelance -->
     <aside class="h-screen w-64 fixed left-0 top-0 bg-white border-r border-primary/5 flex flex-col gap-2 pt-24 pb-8 z-40 shadow-xl shadow-primary/5">
       <div class="px-8 mb-12">
-        <h2 class="font-headline italic font-black text-primary text-2xl">MorLancer Pro</h2>
-        <p class="text-[10px] text-on-surface-variant tracking-[0.2em] font-bold uppercase mt-1">Artisanat Digital</p>
+        <h2 class="font-headline italic font-black text-primary text-2xl">MorLancer</h2>
+        <p class="text-[10px] text-on-surface-variant tracking-[0.2em] font-bold uppercase mt-1">Talents Digitaux</p>
       </div>
       <nav class="flex-grow flex flex-col gap-2">
-        <!-- Lien actif : Tableau de bord -->
-        <a class="flex items-center gap-4 bg-primary text-white rounded-full mx-4 py-3 px-6 shadow-lg shadow-primary/20 scale-98 transition-all" href="#">
+        <a @click="activeTab = 'dashboard'" :class="activeTab === 'dashboard' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-on-surface-variant hover:bg-primary/10'" class="flex items-center gap-4 rounded-full mx-4 py-3 px-6 transition-all cursor-pointer">
           <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
           <span class="text-sm font-bold">Tableau de bord</span>
         </a>
-        <a class="flex items-center gap-4 text-on-surface-variant mx-4 py-3 px-6 hover:bg-primary/10 rounded-full transition-all group" href="#">
+        <a @click="activeTab = 'briefs'" :class="activeTab === 'briefs' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-on-surface-variant hover:bg-primary/10'" class="flex items-center gap-4 rounded-full mx-4 py-3 px-6 transition-all cursor-pointer group">
           <span class="material-symbols-outlined group-hover:scale-110 transition-transform">work</span>
-          <span class="text-sm font-medium">Mes Missions</span>
+          <span class="text-sm font-medium">Mes Briefs</span>
         </a>
-        <a class="flex items-center gap-4 text-on-surface-variant mx-4 py-3 px-6 hover:bg-primary/10 rounded-full transition-all group" href="#">
+        <a @click="activeTab = 'payments'" :class="activeTab === 'payments' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-on-surface-variant hover:bg-primary/10'" class="flex items-center gap-4 rounded-full mx-4 py-3 px-6 transition-all cursor-pointer group">
           <span class="material-symbols-outlined group-hover:scale-110 transition-transform">payments</span>
           <span class="text-sm font-medium">Paiements</span>
         </a>
-        <!-- Accès à la messagerie interne -->
         <router-link to="/messaging" class="flex items-center gap-4 text-on-surface-variant mx-4 py-3 px-6 hover:bg-primary/10 rounded-full transition-all group">
           <span class="material-symbols-outlined group-hover:scale-110 transition-transform">chat_bubble</span>
           <span class="text-sm font-medium">Messages</span>
         </router-link>
-        <a class="flex items-center gap-4 text-on-surface-variant mx-4 py-3 px-6 hover:bg-primary/10 rounded-full transition-all group" href="#">
-          <span class="material-symbols-outlined group-hover:scale-110 transition-transform">settings</span>
-          <span class="text-sm font-medium">Paramètres</span>
+        <a @click="activeTab = 'profile'" :class="activeTab === 'profile' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-on-surface-variant hover:bg-primary/10'" class="flex items-center gap-4 rounded-full mx-4 py-3 px-6 transition-all cursor-pointer group">
+          <span class="material-symbols-outlined group-hover:scale-110 transition-transform">person</span>
+          <span class="text-sm font-medium">Profil</span>
         </a>
       </nav>
       <!-- Zone Promotionnelle / Upgrade -->
@@ -41,28 +42,27 @@
 
     <!-- Contenu Principal (Main Content) -->
     <main class="ml-64 flex-1 p-12 zellige-pattern bg-white/30">
-      <!-- En-tête Contextuel -->
-      <header class="flex justify-between items-start mb-16 px-4">
+      <!-- En-tête commun -->
+      <header class="flex justify-between items-start mb-10 px-4">
         <div>
           <h1 class="font-headline font-bold text-5xl text-on-surface mb-2">Marhaba, {{ userName }}</h1>
-          <p class="text-on-surface-variant font-medium text-lg italic">Gérez vos projets et trouvez l'artisanat d'exception.</p>
+          <p class="text-on-surface-variant font-medium text-lg italic">{{ greeting }}</p>
         </div>
-        <div class="flex items-center gap-6">
-          <div class="flex gap-3">
-            <button class="p-3 bg-white/80 backdrop-blur-md text-on-surface-variant rounded-full hover:bg-primary/10 hover:text-primary transition-all border border-primary/5 shadow-sm">
-              <span class="material-symbols-outlined">notifications</span>
-            </button>
-            <button class="p-3 bg-white/80 backdrop-blur-md text-on-surface-variant rounded-full hover:bg-primary/10 hover:text-primary transition-all border border-primary/5 shadow-sm">
-              <span class="material-symbols-outlined">favorite</span>
-            </button>
-          </div>
-          <!-- Action : Portfolio ou Proposition -->
-          <button @click="showPostModal = true" class="flex items-center gap-3 bg-primary text-white px-8 py-4 rounded-full font-bold text-md hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/30">
-            <span class="material-symbols-outlined font-bold">add</span>
-            Nouveau Brief
+        <div class="flex items-center gap-4">
+          <button @click="activeTab = 'missions'" class="flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-full font-bold text-sm hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/30">
+            <span class="material-symbols-outlined text-sm">search</span>
+            Chercher une mission
           </button>
         </div>
       </header>
+
+      <!-- Onglet Missions Search -->
+      <div v-if="activeTab === 'missions'" class="px-4">
+        <MissionSearch />
+      </div>
+
+      <!-- Onglet Dashboard (contenu existant) -->
+      <div v-if="activeTab === 'dashboard'">
 
       <!-- Grille Bento : Organisation visuelle moderne -->
       <div class="grid grid-cols-12 gap-8 px-4">
@@ -168,51 +168,134 @@
           </button>
         </div>
       </section>
+      </div> <!-- fin onglet dashboard -->
     </main>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import TopNavBar from '@/components/Common/TopNavBar.vue';
+import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import axios from 'axios';
+import MissionSearch from '@/components/Freelancer/MissionSearch.vue';
 
-/**
- * Variables réactives pour stocker les informations de l'utilisateur.
- * ref() permet à Vue de mettre à jour l'interface quand la donnée change.
- */
-const userName = ref('Soufiane');
-const balance = ref('14,250.00');
+const userName = ref(JSON.parse(localStorage.getItem('user') || '{}')?.name || '');
+const userInitials = computed(() => {
+  return userName.value.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+});
 
-/**
- * Liste statique (pour la démo) de suggestions de freelances.
- */
-const talents = ref([
-  { name: 'Yasmine B.', skill: 'Design Zellige', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80' },
-  { name: 'Omar K.', skill: 'Architecture Int.', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80' }
-]);
+const activeTab = ref('dashboard');
+const router = useRouter();
+const balance = ref('0.00');
+const searchQuery = ref('');
+const showNotifications = ref(false);
+const unreadNotifications = ref(0);
 
-/**
- * Données réactives pour les missions en cours.
- */
-const activeMissions = ref([
-  { 
-    id: 1, 
-    title: 'Rénovation Salon Riadh', 
-    client: 'Mehdi El Fassi', 
-    budget: '8,500', 
-    progress: 75, 
-    urgent: true,
-    image: 'https://images.unsplash.com/photo-1590483736622-39da8af7541c?auto=format&fit=crop&w=400&q=80'
-  },
-  { 
-    id: 2, 
-    title: 'Mobilier sur mesure - Noyer', 
-    client: 'Sarah M.', 
-    budget: '12,000', 
-    progress: 32, 
-    urgent: false,
-    image: 'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?auto=format&fit=crop&w=400&q=80'
+// Données dynamiques
+const talents = ref([]);
+const activeMissions = ref([]);
+const favorites = ref([]);
+const notifications = ref([]);
+
+const greeting = computed(() => {
+  const h = new Date().getHours();
+  if (h < 12) return 'Bonjour, bonne matinée !';
+  if (h < 18) return 'Bon après-midi, gérez vos projets.';
+  return 'Bonsoir, continuez sur votre lancée !';
+});
+
+// Récupérer les données de l'API
+const fetchDashboardData = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const headers = { Authorization: `Bearer ${token}` };
+
+    // Récupérer les missions en cours
+    const missionsRes = await axios.get('http://localhost:8000/api/freelancer/missions/active', { headers });
+    activeMissions.value = missionsRes.data.data || [];
+
+    // Récupérer le solde financier
+    const balanceRes = await axios.get('http://localhost:8000/api/freelancer/balance', { headers });
+    balance.value = balanceRes.data.balance || '0.00';
+
+    // Récupérer les talents suggérés
+    const talentsRes = await axios.get('http://localhost:8000/api/freelancer/suggested', { headers });
+    talents.value = talentsRes.data.data || [];
+
+    // Récupérer les favoris
+    const favoritesRes = await axios.get('http://localhost:8000/api/freelancer/favorites', { headers });
+    favorites.value = favoritesRes.data.data || [];
+
+    // Récupérer les notifications
+    const notificationsRes = await axios.get('http://localhost:8000/api/freelancer/notifications', { headers });
+    notifications.value = notificationsRes.data.data || [];
+    unreadNotifications.value = notifications.value.filter(n => !n.read).length;
+
+  } catch (error) {
+    console.error('Erreur lors du chargement des données:', error);
+    // Utiliser des données par défaut en cas d'erreur
+    setDefaultData();
   }
-]);
+};
+
+// Données par défaut si l'API n'est pas disponible
+const setDefaultData = () => {
+  balance.value = '14,250.00';
+  activeMissions.value = [
+    { 
+      id: 1, 
+      title: 'Rénovation Salon Riadh', 
+      client: 'Mehdi El Fassi', 
+      budget: '8,500', 
+      progress: 75, 
+      urgent: true,
+      image: 'https://images.unsplash.com/photo-1590483736622-39da8af7541c?auto=format&fit=crop&w=400&q=80'
+    },
+    { 
+      id: 2, 
+      title: 'Mobilier sur mesure - Noyer', 
+      client: 'Sarah M.', 
+      budget: '12,000', 
+      progress: 32, 
+      urgent: false,
+      image: 'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?auto=format&fit=crop&w=400&q=80'
+    }
+  ];
+  talents.value = [
+    { id: 1, name: 'Yasmine B.', skill: 'Design Zellige', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80' },
+    { id: 2, name: 'Omar K.', skill: 'Architecture Int.', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80' }
+  ];
+  notifications.value = [
+    { id: 1, title: 'Nouveau message', message: 'Mehdi El Fassi vous a envoyé un message', read: false },
+    { id: 2, title: 'Paiement reçu', message: '5,000 MAD reçu pour la mission "Rénovation Salon"', read: true }
+  ];
+  unreadNotifications.value = 1;
+  favorites.value = [
+    {
+      id: 1,
+      title: 'Projet Web Moderne',
+      client: 'Client A',
+      description: 'Création d\'un site web moderne et responsive',
+      budget: '5,000'
+    }
+  ];
+};
+
+const toggleNotifications = () => {
+  showNotifications.value = !showNotifications.value;
+};
+
+const openNewBriefModal = () => {
+  // TODO: Ouvrir un modal pour créer un nouveau brief
+  console.log('Ouvrir modal nouveau brief');
+};
+
+// Charger les données au montage du composant
+onMounted(() => {
+  fetchDashboardData();
+});
 </script>
 
 <style scoped>
