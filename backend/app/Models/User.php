@@ -26,8 +26,10 @@ class User extends Authenticatable
         'password',
         'role_id',
         'verification_status', // 'pending', 'verified', 'rejected'
-        'id_document_path',    // Chemin vers l'image de la CIN/Passeport
-        'balance'              // Solde actuel de l'utilisateur (en MAD)
+        'id_document_path',
+        'id_number',
+        'birthplace',
+        'balance'
     ];
 
     /**
