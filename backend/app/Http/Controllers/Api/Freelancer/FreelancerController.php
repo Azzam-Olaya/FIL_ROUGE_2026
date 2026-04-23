@@ -16,7 +16,8 @@ class FreelancerController extends Controller
 {
     public function getAvailableMissions(Request $request)
     {
-        $query = \App\Models\Mission::where('status', 'open')->with(['client', 'category']);
+        $query = \App\Models\Mission::where('status', 'open')
+            ->with(['client', 'category', 'likes', 'comments.user']);
 
         if ($request->search) {
             $query->where(function($q) use ($request) {
@@ -36,7 +37,86 @@ class FreelancerController extends Controller
             $query->where('budget', '<=', $request->budget_max);
         }
 
-        return response()->json($query->latest()->get());
+        return response()->json($query->latest()->get()->map(fn($m) => [
+            'id'          => $m->id,
+            'title'       => $m->title,
+            'description' => $m->description,
+            'budget'      => $m->budget,
+            'deadline'    => $m->deadline,
+            'category'    => $m->category?->name,
+            'clientName'  => $m->client?->name,
+            'clientId'    => $m->client_id,
+            'likes'       => $m->likes->count(),
+            'comments'    => $m->comments->count(),
+            'commentList' => $m->comments->map(fn($c) => [
+                'id'       => $c->id,
+                'author'   => $c->user?->name,
+                'authorId' => $c->user_id,
+                'text'     => $c->body,
+                'role'     => $c->user?->role?->name,
+            ]),
+            'createdAt'   => $m->created_at,
+        ]));
+    }
+
+    public function getPublishedMissions(Request $request)
+    {
+        return $this->getAvailableMissions($request);
+    }
+
+    public function toggleMissionLike(Request $request, $id)
+    {
+        $existing = \App\Models\MissionLike::where(['mission_id' => $id, 'user_id' => $request->user()->id])->first();
+        if ($existing) {
+            $existing->delete();
+            return response()->json(['liked' => false]);
+        }
+        \App\Models\MissionLike::create(['mission_id' => $id, 'user_id' => $request->user()->id]);
+
+        // Notifier le client propriétaire de la mission
+        $mission = \App\Models\Mission::find($id);
+        if ($mission && $mission->client_id !== $request->user()->id) {
+            \App\Models\Notification::create([
+                'user_id'    => $mission->client_id,
+                'type'       => 'like',
+                'title'      => '❤️ Nouveau like sur votre mission',
+                'message'    => $request->user()->name . ' a aimé votre mission "' . $mission->title . '"',
+                'mission_id' => $mission->id,
+                'read'       => false,
+            ]);
+        }
+        return response()->json(['liked' => true]);
+    }
+
+    public function addMissionComment(Request $request, $id)
+    {
+        $request->validate(['body' => 'required|string|max:500']);
+        $comment = \App\Models\MissionComment::create([
+            'mission_id' => $id,
+            'user_id'    => $request->user()->id,
+            'body'       => $request->body,
+        ]);
+
+        // Notifier le client propriétaire de la mission
+        $mission = \App\Models\Mission::find($id);
+        if ($mission && $mission->client_id !== $request->user()->id) {
+            \App\Models\Notification::create([
+                'user_id'    => $mission->client_id,
+                'type'       => 'comment',
+                'title'      => '💬 Nouveau commentaire sur votre mission',
+                'message'    => $request->user()->name . ' : "' . \Str::limit($request->body, 60) . '"',
+                'mission_id' => $mission->id,
+                'read'       => false,
+            ]);
+        }
+        return response()->json($comment->load('user'), 201);
+    }
+
+    public function getMissionComments($id)
+    {
+        return response()->json(
+            \App\Models\MissionComment::where('mission_id', $id)->with('user.role')->latest()->get()
+        );
     }
 
     // Briefs (portfolios)

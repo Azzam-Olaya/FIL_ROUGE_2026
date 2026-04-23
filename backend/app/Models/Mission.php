@@ -45,4 +45,14 @@ class Mission extends Model
     {
         return $this->hasOne(Contract::class);
     }
+
+    public function likes()
+    {
+        return $this->hasMany(MissionLike::class);
+    }
+
+    public function comments()
+    {
+        return $this->hasMany(MissionComment::class);
+    }
 }

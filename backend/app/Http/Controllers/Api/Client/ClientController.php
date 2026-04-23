@@ -38,6 +38,94 @@ class ClientController extends Controller
         );
     }
 
+    public function getNotifications(Request $request)
+    {
+        return response()->json(
+            \App\Models\Notification::where('user_id', $request->user()->id)
+                ->latest()->take(30)->get()
+        );
+    }
+
+    public function markOneRead(Request $request, $id)
+    {
+        \App\Models\Notification::where('id', $id)
+            ->where('user_id', $request->user()->id)
+            ->update(['read' => true]);
+        return response()->json(['ok' => true]);
+    }
+
+    public function markAllRead(Request $request)
+    {
+        \App\Models\Notification::where('user_id', $request->user()->id)
+            ->where('read', false)
+            ->update(['read' => true]);
+        return response()->json(['ok' => true]);
+    }
+
+    public function getBriefs()
+    {
+        return response()->json(
+            \App\Models\Portfolio::with(['freelancer', 'category', 'likes', 'comments.user'])
+                ->latest()->get()
+                ->map(fn($b) => [
+                    'id'          => $b->id,
+                    'title'       => $b->title,
+                    'description' => $b->description,
+                    'category'    => $b->category?->name,
+                    'freelancerName' => $b->freelancer?->name,
+                    'freelancerId'   => $b->freelancer_id,
+                    'likes'       => $b->likes->count(),
+                    'comments'    => $b->comments->count(),
+                    'commentList' => $b->comments->map(fn($c) => ['id' => $c->id, 'author' => $c->user?->name, 'text' => $c->body]),
+                    'createdAt'   => $b->created_at,
+                ])
+        );
+    }
+
+    public function toggleLike(Request $request, $id)
+    {
+        $existing = \App\Models\PortfolioLike::where(['portfolio_id' => $id, 'user_id' => $request->user()->id])->first();
+        if ($existing) { $existing->delete(); return response()->json(['liked' => false]); }
+        \App\Models\PortfolioLike::create(['portfolio_id' => $id, 'user_id' => $request->user()->id]);
+        return response()->json(['liked' => true]);
+    }
+
+    public function addComment(Request $request, $id)
+    {
+        $request->validate(['body' => 'required|string|max:500']);
+        $comment = \App\Models\PortfolioComment::create([
+            'portfolio_id' => $id,
+            'user_id'      => $request->user()->id,
+            'body'         => $request->body,
+        ]);
+        return response()->json($comment->load('user'), 201);
+    }
+
+    public function getComments($id)
+    {
+        return response()->json(
+            \App\Models\PortfolioComment::where('portfolio_id', $id)->with('user')->latest()->get()
+        );
+    }
+
+    public function toggleFavorite(Request $request, $id)
+    {
+        $existing = \App\Models\PortfolioFavorite::where(['portfolio_id' => $id, 'user_id' => $request->user()->id])->first();
+        if ($existing) { $existing->delete(); return response()->json(['favorited' => false]); }
+        \App\Models\PortfolioFavorite::create(['portfolio_id' => $id, 'user_id' => $request->user()->id]);
+        return response()->json(['favorited' => true]);
+    }
+
+    public function getPayments(Request $request)
+    {
+        return response()->json(
+            \App\Models\Contract::where('client_id', $request->user()->id)
+                ->with(['mission', 'freelancer'])
+                ->latest()
+                ->get()
+        );
+    }
+
     public function getStats(Request $request)
     {
         $user = $request->user();

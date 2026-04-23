@@ -34,6 +34,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/missions', [ClientController::class, 'storeMission']);
         Route::get('/missions', [ClientController::class, 'getMyMissions']);
         Route::get('/stats', [ClientController::class, 'getStats']);
+        Route::get('/payments', [ClientController::class, 'getPayments']);
+        Route::get('/briefs', [ClientController::class, 'getBriefs']);
+        Route::post('/briefs/{id}/like', [ClientController::class, 'toggleLike']);
+        Route::post('/briefs/{id}/comment', [ClientController::class, 'addComment']);
+        Route::get('/briefs/{id}/comments', [ClientController::class, 'getComments']);
+        Route::post('/briefs/{id}/favorite', [ClientController::class, 'toggleFavorite']);
+        Route::get('/notifications', [ClientController::class, 'getNotifications']);
+        Route::post('/notifications/read', [ClientController::class, 'markAllRead']);
+        Route::patch('/notifications/{id}/read', [ClientController::class, 'markOneRead']);
     });
 
     // Freelancer
@@ -43,6 +52,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/missions/active', [FreelancerController::class, 'getActiveMissions']);
         Route::get('/categories', [FreelancerController::class, 'getCategories']);
         Route::get('/missions', [FreelancerController::class, 'getAvailableMissions']);
+        Route::post('/missions/{id}/like', [FreelancerController::class, 'toggleMissionLike']);
+        Route::post('/missions/{id}/comment', [FreelancerController::class, 'addMissionComment']);
+        Route::get('/missions/{id}/comments', [FreelancerController::class, 'getMissionComments']);
+        Route::get('/missions/published', [FreelancerController::class, 'getPublishedMissions']);
         Route::get('/briefs', [FreelancerController::class, 'getBriefs']);
         Route::get('/briefs/mine', [FreelancerController::class, 'getMyBriefs']);
         Route::post('/briefs', [FreelancerController::class, 'storeBrief']);
@@ -60,10 +73,15 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // Messages
-    Route::get('/contracts/{id}/messages', [\App\Http\Controllers\Api\MessageController::class, 'getConversation']);
+    Route::get('/conversations', [\App\Http\Controllers\Api\MessageController::class, 'getConversations']);
+    Route::get('/conversations/{userId}', [\App\Http\Controllers\Api\MessageController::class, 'getMessages']);
     Route::post('/messages', [\App\Http\Controllers\Api\MessageController::class, 'sendMessage']);
+    Route::get('/contracts/{id}/messages', [\App\Http\Controllers\Api\MessageController::class, 'getConversation']);
 
     // Contracts
     Route::post('/contracts', [\App\Http\Controllers\Api\ContractController::class, 'store']);
     Route::post('/contracts/{id}/complete', [\App\Http\Controllers\Api\ContractController::class, 'complete']);
+    Route::post('/contracts/{id}/refund', [\App\Http\Controllers\Api\ContractController::class, 'refund']);
+    Route::get('/contracts/client', [\App\Http\Controllers\Api\ContractController::class, 'clientContracts']);
+    Route::get('/contracts/freelancer', [\App\Http\Controllers\Api\ContractController::class, 'freelancerContracts']);
 });

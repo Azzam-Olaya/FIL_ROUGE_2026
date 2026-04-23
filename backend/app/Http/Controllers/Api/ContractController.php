@@ -12,6 +12,24 @@ use Illuminate\Http\Request;
  */
 class ContractController extends Controller
 {
+    public function clientContracts(Request $request)
+    {
+        return response()->json(
+            Contract::where('client_id', $request->user()->id)
+                ->with(['mission', 'freelancer'])
+                ->latest()->get()
+        );
+    }
+
+    public function freelancerContracts(Request $request)
+    {
+        return response()->json(
+            Contract::where('freelancer_id', $request->user()->id)
+                ->with(['mission', 'client'])
+                ->latest()->get()
+        );
+    }
+
     /**
      * Création d'un contrat (Validation du devis par le client)
      * Le client verse la somme totale qui est "bloquée" dans l'application.
