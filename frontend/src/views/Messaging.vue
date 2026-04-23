@@ -1,5 +1,5 @@
 <template>
-  <div class="h-screen flex flex-col bg-surface font-body text-on-surface overflow-hidden relative">
+  <div class="h-screen flex flex-col bg-surface font-body text-on-surface zellige-pattern overflow-hidden relative">
     <!-- TopNavBar Réutilisable -->
     <TopNavBar />
 

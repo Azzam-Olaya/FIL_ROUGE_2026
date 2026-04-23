@@ -62,6 +62,7 @@ export default {
         full: "9999px"
       },
       fontFamily: {
+        headline: ["Noto Serif", "serif"],
         serif: ["Noto Serif", "serif"],
         sans: ["Manrope", "sans-serif"],
         body: ["Work Sans", "sans-serif"],

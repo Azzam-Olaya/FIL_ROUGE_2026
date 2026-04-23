@@ -42,7 +42,7 @@
     </aside>
 
     <!-- Contenu Principal -->
-    <main class="ml-64 flex-1 p-12 zellige-pattern bg-white/30">
+    <main class="ml-64 p-12 min-h-screen zellige-pattern flex-1">
       <header class="flex justify-between items-start mb-16 px-4">
         <div>
           <h1 class="font-headline font-black text-5xl text-primary tracking-tight">Pack de Jetons</h1>

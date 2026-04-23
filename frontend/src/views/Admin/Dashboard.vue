@@ -1,8 +1,5 @@
 <template>
-  <div class="min-h-screen bg-surface font-body text-on-surface flex flex-col overflow-x-hidden">
-    <!-- TopNavBar Réutilisable -->
-    <TopNavBar />
-    <div class="flex flex-1 overflow-x-hidden">
+  <div class="min-h-screen bg-surface font-body text-on-surface flex overflow-x-hidden">
     <!-- Barre Latérale (SideNavBar) : Navigation pour l'Administrateur -->
     <aside class="h-screen w-64 fixed left-0 top-0 bg-white border-r border-primary/5 flex flex-col gap-2 pt-24 pb-8 z-40 shadow-xl shadow-primary/5">
       <div class="px-8 mb-10">
@@ -86,12 +83,10 @@
         </div>
       </div>
     </main>
-    </div>
   </div>
 </template>
 
 <script setup>
-import TopNavBar from '@/components/Common/TopNavBar.vue'
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'

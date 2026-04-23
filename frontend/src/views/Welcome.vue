@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-surface selection:bg-primary/20 overflow-x-hidden">
+  <div class="min-h-screen bg-surface selection:bg-primary/20 zellige-pattern overflow-x-hidden">
 
     <!-- ═══════════════════════════════════════════════
          NAVBAR

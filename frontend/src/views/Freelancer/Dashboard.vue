@@ -41,7 +41,7 @@
     </aside>
 
     <!-- Contenu Principal (Main Content) -->
-    <main class="ml-64 flex-1 p-12 zellige-pattern bg-white/30">
+    <main class="ml-64 p-12 min-h-screen zellige-pattern flex-1">
       <!-- En-tête commun -->
       <header class="flex justify-between items-start mb-10 px-4">
         <div>
@@ -304,6 +304,6 @@ onMounted(() => {
  * .zellige-pattern : Applique le motif géométrique marocain discret.
  */
 .zellige-pattern {
-  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l15 15-15 15-15-15zM0 30l15 15-15 15-15-15zM60 30l15 15-15 15-15-15zM30 60l15-15-15-15-15 15z' fill='%23006233' fill-opacity='0.03'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l5 25h25l-20 15 8 20-18-12-18 12 8-20L0 25h25z' fill='%23006233' fill-opacity='0.03' fill-rule='evenodd'/%3E%3C/svg%3E");
 }
 </style>
