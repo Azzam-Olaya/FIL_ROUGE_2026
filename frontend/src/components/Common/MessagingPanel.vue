@@ -111,8 +111,12 @@
 import { ref, nextTick, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
 
+const props = defineProps({ autoOpen: { type: Object, default: null } })
+const emit  = defineEmits(['opened'])
+
 const BASE = 'http://localhost:8000/api'
 const h    = () => ({ Authorization: `Bearer ${localStorage.getItem('token')}` })
+const me   = () => JSON.parse(localStorage.getItem('user') || '{}')?.id
 
 const conversations = ref([])
 const messages      = ref([])
@@ -126,60 +130,171 @@ const sending       = ref(false)
 const messagesEl    = ref(null)
 let pollingTimer = null, searchTimer = null
 
+// ── Conversations ──────────────────────────────────────────────────────────
 const loadConversations = async () => {
   loadingConvs.value = true
-  try { const res = await axios.get(`${BASE}/conversations`, { headers: h() }); conversations.value = res.data }
-  catch { conversations.value = [] } finally { loadingConvs.value = false }
+  try {
+    const res = await axios.get(`${BASE}/conversations`, { headers: h() })
+    conversations.value = res.data
+  } catch { conversations.value = [] }
+  finally { loadingConvs.value = false }
 }
 
+// ── Open a conversation ────────────────────────────────────────────────────
 const openConversation = async (conv) => {
-  selectedUser.value = conv; searchQuery.value = ''; searchResults.value = []
-  loadingMsgs.value = true
-  try { const res = await axios.get(`${BASE}/conversations/${conv.user_id}`, { headers: h() }); messages.value = res.data; await scrollBottom() }
-  catch { messages.value = [] } finally { loadingMsgs.value = false }
+  selectedUser.value  = conv
+  searchQuery.value   = ''
+  searchResults.value = []
+  loadingMsgs.value   = true
+  messages.value      = []
+  try {
+    const res = await axios.get(`${BASE}/conversations/${conv.user_id}`, { headers: h() })
+    // Ensure we have an array
+    messages.value = Array.isArray(res.data) ? res.data : []
+    await scrollBottom()
+    // Mark conversation as read in list
+    const c = conversations.value.find(c => c.user_id === conv.user_id)
+    if (c) c.unread = false
+  } catch (e) {
+    console.error('openConversation error:', e?.response?.data || e)
+    messages.value = []
+  } finally { loadingMsgs.value = false }
 }
 
-const startConversation = (user) => {
-  selectedUser.value = { user_id: user.id, name: user.name, role: user.role?.name }
-  searchQuery.value = ''; searchResults.value = []; messages.value = []
+// ── Start new conversation from search ────────────────────────────────────
+const startConversation = async (user) => {
+  searchQuery.value   = ''
+  searchResults.value = []
+  const existing = conversations.value.find(c => c.user_id === user.id)
+  if (existing) {
+    await openConversation(existing)
+  } else {
+    selectedUser.value = { user_id: user.id, name: user.name, role: user.role?.name }
+    messages.value = []
+    // Try to load existing messages
+    try {
+      const res = await axios.get(`${BASE}/conversations/${user.id}`, { headers: h() })
+      messages.value = res.data
+      await scrollBottom()
+    } catch {}
+  }
 }
 
+// ── Send message ───────────────────────────────────────────────────────────
 const sendMessage = async () => {
   if (!newMessage.value.trim() || !selectedUser.value || sending.value) return
-  const text = newMessage.value.trim(); newMessage.value = ''; sending.value = true
-  const tempId = Date.now()
-  messages.value.push({ id: tempId, sender: 'me', text, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) })
+  const text = newMessage.value.trim()
+  newMessage.value = ''
+  sending.value    = true
+
+  // Optimistic message
+  const tempId = `tmp_${Date.now()}`
+  messages.value.push({
+    id: tempId, sender: 'me', text,
+    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  })
   await scrollBottom()
+
   try {
-    const res = await axios.post(`${BASE}/messages`, { receiver_id: selectedUser.value.user_id, content: text }, { headers: h() })
-    const idx = messages.value.findIndex(m => m.id === tempId)
-    if (idx !== -1) messages.value[idx] = res.data
-    loadConversations()
-  } catch {} finally { sending.value = false }
+    await axios.post(`${BASE}/messages`, {
+      receiver_id: selectedUser.value.user_id,
+      content: text
+    }, { headers: h() })
+
+    // Reload real messages from server
+    const res = await axios.get(`${BASE}/conversations/${selectedUser.value.user_id}`, { headers: h() })
+    messages.value = Array.isArray(res.data) ? res.data : messages.value
+    await scrollBottom()
+
+    // Refresh conversation list
+    const convRes = await axios.get(`${BASE}/conversations`, { headers: h() })
+    conversations.value = convRes.data
+  } catch (e) {
+    console.error('sendMessage error:', e?.response?.data || e)
+    // Remove temp message on error
+    messages.value = messages.value.filter(m => m.id !== tempId)
+  } finally { sending.value = false }
 }
 
+// ── Search users ───────────────────────────────────────────────────────────
 const onSearch = () => {
   clearTimeout(searchTimer)
   if (searchQuery.value.trim().length < 2) { searchResults.value = []; return }
   searchTimer = setTimeout(async () => {
-    try { const res = await axios.get(`${BASE}/users/search?q=${encodeURIComponent(searchQuery.value)}`, { headers: h() }); searchResults.value = res.data }
-    catch { searchResults.value = [] }
+    try {
+      const res = await axios.get(`${BASE}/users/search?q=${encodeURIComponent(searchQuery.value)}`, { headers: h() })
+      searchResults.value = res.data
+    } catch { searchResults.value = [] }
   }, 300)
 }
 
+// ── Polling: check for new messages every 3s ───────────────────────────────
 const poll = async () => {
+  // Refresh conversation list for all users
+  try {
+    const res = await axios.get(`${BASE}/conversations`, { headers: h() })
+    conversations.value = res.data
+  } catch {}
+
+  // Refresh messages in open conversation
   if (selectedUser.value) {
     try {
       const res = await axios.get(`${BASE}/conversations/${selectedUser.value.user_id}`, { headers: h() })
-      if (res.data.length !== messages.value.length) { messages.value = res.data; await scrollBottom() }
+      const newMsgs = res.data
+      // Only update if there are new messages (compare last id)
+      const lastOld = messages.value.filter(m => !String(m.id).startsWith('tmp_')).at(-1)?.id
+      const lastNew = newMsgs.at(-1)?.id
+      if (lastNew && lastNew !== lastOld) {
+        messages.value = newMsgs
+        await scrollBottom()
+      }
     } catch {}
   }
-  loadConversations()
 }
 
-const scrollBottom = async () => { await nextTick(); if (messagesEl.value) messagesEl.value.scrollTop = messagesEl.value.scrollHeight }
+// ── Auto-open conversation (from contact button) ───────────────────────────
+const openAutoConv = async ({ userId, name }) => {
+  if (!userId) return
+  await loadConversations()
+  const existing = conversations.value.find(c => c.user_id === userId)
+  if (existing) {
+    await openConversation(existing)
+  } else {
+    selectedUser.value  = { user_id: userId, name, role: 'Utilisateur' }
+    searchQuery.value   = ''
+    searchResults.value = []
+    loadingMsgs.value   = true
+    try {
+      const res = await axios.get(`${BASE}/conversations/${userId}`, { headers: h() })
+      messages.value = res.data
+      await scrollBottom()
+    } catch { messages.value = [] }
+    finally { loadingMsgs.value = false }
+    // Add to conversation list if not present
+    if (!conversations.value.find(c => c.user_id === userId)) {
+      conversations.value.unshift({ user_id: userId, name, lastMessage: '...', time: '', unread: false })
+    }
+  }
+  emit('opened')
+}
+
+const scrollBottom = async () => {
+  await nextTick()
+  if (messagesEl.value) messagesEl.value.scrollTop = messagesEl.value.scrollHeight
+}
 const initials = (name) => name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U'
 
-onMounted(() => { loadConversations(); pollingTimer = setInterval(poll, 5000) })
-onUnmounted(() => clearInterval(pollingTimer))
+// Handle event-based open (from freelancer MissionCard)
+const handleOpenConv = (e) => { openAutoConv(e.detail) }
+
+onMounted(async () => {
+  await loadConversations()
+  if (props.autoOpen?.userId) await openAutoConv(props.autoOpen)
+  pollingTimer = setInterval(poll, 3000)
+  window.addEventListener('open-conversation', handleOpenConv)
+})
+onUnmounted(() => {
+  clearInterval(pollingTimer)
+  window.removeEventListener('open-conversation', handleOpenConv)
+})
 </script>
