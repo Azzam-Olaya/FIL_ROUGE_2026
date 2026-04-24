@@ -48,6 +48,58 @@ class FreelancerController extends Controller
         );
     }
 
+    // Mission Likes (freelancers can like mission projects)
+    public function toggleMissionLike(Request $request, $id)
+    {
+        $mission = \App\Models\Mission::findOrFail($id);
+        
+        // Use portfolio likes to track mission interests
+        $existing = PortfolioLike::where([
+            'portfolio_id' => $id, 
+            'user_id' => $request->user()->id
+        ])->first();
+        
+        if ($existing) {
+            $existing->delete();
+            return response()->json(['liked' => false, 'count' => PortfolioLike::where('portfolio_id', $id)->count()]);
+        }
+        
+        PortfolioLike::create([
+            'portfolio_id' => $id,
+            'user_id' => $request->user()->id,
+        ]);
+        
+        return response()->json(['liked' => true, 'count' => PortfolioLike::where('portfolio_id', $id)->count()]);
+    }
+
+    // Mission Comments
+    public function addMissionComment(Request $request, $id)
+    {
+        $request->validate(['text' => 'required|string|max:500']);
+        
+        $mission = \App\Models\Mission::findOrFail($id);
+        
+        $comment = PortfolioComment::create([
+            'portfolio_id' => $id,
+            'user_id' => $request->user()->id,
+            'body' => $request->text,
+        ]);
+        
+        return response()->json($comment->load('user'), 201);
+    }
+
+    public function getMissionComments($id)
+    {
+        $mission = \App\Models\Mission::findOrFail($id);
+        
+        return response()->json(
+            PortfolioComment::where('portfolio_id', $id)
+                ->with('user')
+                ->latest()
+                ->get()
+        );
+    }
+
     public function getMyBriefs(Request $request)
     {
         return response()->json(

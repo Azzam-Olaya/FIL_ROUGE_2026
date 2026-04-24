@@ -1,226 +1,338 @@
 <template>
-  <div class="min-h-screen bg-surface font-body text-on-surface flex overflow-x-hidden">
-    <!-- Barre Latérale (SideNavBar) : Navigation principale pour le Freelance -->
-    <aside class="h-screen w-64 fixed left-0 top-0 bg-white border-r border-primary/5 flex flex-col gap-2 pt-24 pb-8 z-40 shadow-xl shadow-primary/5">
-      <div class="px-8 mb-12">
-        <h2 class="font-headline italic font-black text-primary text-2xl">MorLancer Pro</h2>
-        <p class="text-[10px] text-on-surface-variant tracking-[0.2em] font-bold uppercase mt-1">Artisanat Digital</p>
-      </div>
-      <nav class="flex-grow flex flex-col gap-2">
-        <!-- Lien actif : Tableau de bord -->
-        <a class="flex items-center gap-4 bg-primary text-white rounded-full mx-4 py-3 px-6 shadow-lg shadow-primary/20 scale-98 transition-all" href="#">
-          <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
-          <span class="text-sm font-bold">Tableau de bord</span>
-        </a>
-        <a class="flex items-center gap-4 text-on-surface-variant mx-4 py-3 px-6 hover:bg-primary/10 rounded-full transition-all group" href="#">
-          <span class="material-symbols-outlined group-hover:scale-110 transition-transform">work</span>
-          <span class="text-sm font-medium">Mes Missions</span>
-        </a>
-        <a class="flex items-center gap-4 text-on-surface-variant mx-4 py-3 px-6 hover:bg-primary/10 rounded-full transition-all group" href="#">
-          <span class="material-symbols-outlined group-hover:scale-110 transition-transform">payments</span>
-          <span class="text-sm font-medium">Paiements</span>
-        </a>
-        <!-- Accès à la messagerie interne -->
-        <router-link to="/messaging" class="flex items-center gap-4 text-on-surface-variant mx-4 py-3 px-6 hover:bg-primary/10 rounded-full transition-all group">
-          <span class="material-symbols-outlined group-hover:scale-110 transition-transform">chat_bubble</span>
-          <span class="text-sm font-medium">Messages</span>
-        </router-link>
-        <a class="flex items-center gap-4 text-on-surface-variant mx-4 py-3 px-6 hover:bg-primary/10 rounded-full transition-all group" href="#">
-          <span class="material-symbols-outlined group-hover:scale-110 transition-transform">settings</span>
-          <span class="text-sm font-medium">Paramètres</span>
-        </a>
-      </nav>
-      <!-- Zone Promotionnelle / Upgrade -->
-      <div class="px-4 mt-auto">
-        <div class="p-6 bg-surface-container-high/50 rounded-[2rem] border border-primary/5 flex flex-col gap-4 text-center">
-          <p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Besoin de plus de visibilité ?</p>
-          <button class="w-full bg-secondary text-white py-3 rounded-full font-bold text-xs hover:brightness-110 transition-all shadow-lg shadow-secondary/10">Devenir Premium</button>
-        </div>
-      </div>
-    </aside>
+  <div class="min-h-screen bg-surface font-body text-on-surface flex flex-col overflow-x-hidden">
+    <!-- TopNavBar modulaire -->
+    <TopNavBar />
 
-    <!-- Contenu Principal (Main Content) -->
-    <main class="ml-64 flex-1 p-12 zellige-pattern bg-white/30">
-      <!-- En-tête Contextuel -->
-      <header class="flex justify-between items-start mb-16 px-4">
-        <div>
-          <h1 class="font-headline font-bold text-5xl text-on-surface mb-2">Marhaba, {{ userName }}</h1>
-          <p class="text-on-surface-variant font-medium text-lg italic">Gérez vos projets et trouvez l'artisanat d'exception.</p>
-        </div>
-        <div class="flex items-center gap-6">
-          <div class="flex gap-3">
-            <button class="p-3 bg-white/80 backdrop-blur-md text-on-surface-variant rounded-full hover:bg-primary/10 hover:text-primary transition-all border border-primary/5 shadow-sm">
-              <span class="material-symbols-outlined">notifications</span>
-            </button>
-            <button class="p-3 bg-white/80 backdrop-blur-md text-on-surface-variant rounded-full hover:bg-primary/10 hover:text-primary transition-all border border-primary/5 shadow-sm">
-              <span class="material-symbols-outlined">favorite</span>
-            </button>
-          </div>
-          <!-- Action : Portfolio ou Proposition -->
-          <button @click="showPostModal = true" class="flex items-center gap-3 bg-primary text-white px-8 py-4 rounded-full font-bold text-md hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/30">
-            <span class="material-symbols-outlined font-bold">add</span>
-            Nouveau Brief
-          </button>
-        </div>
-      </header>
+    <div class="flex flex-1 overflow-x-hidden">
+      <!-- Barre Latérale -->
+      <Sidebar :activeTab="activeTab" @change-tab="tab => activeTab = tab" />
 
-      <!-- Grille Bento : Organisation visuelle moderne -->
-      <div class="grid grid-cols-12 gap-8 px-4">
+      <!-- Contenu Principal -->
+      <main class="ml-64 p-8 min-h-screen flex-1 relative bg-surface zellige-pattern">
         
-        <!-- Section Financière (Gauche) -->
-        <section class="col-span-12 lg:col-span-4 flex flex-col gap-8">
-          <div class="bg-white/80 backdrop-blur-md p-8 rounded-[2.5rem] border border-primary/5 flex flex-col justify-between h-64 relative overflow-hidden group shadow-2xl shadow-primary/5">
-            <div class="absolute -top-6 -right-6 w-32 h-32 bg-primary/5 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
-            <div>
-              <p class="text-on-surface-variant text-[10px] font-bold uppercase tracking-[0.2em] mb-2 opacity-60">Revenus Disponibles</p>
-              <h3 class="font-headline text-5xl font-bold text-on-surface tracking-tighter">{{ balance }} <span class="text-xl font-bold text-primary italic">MAD</span></h3>
+        <!-- ── Onglet : Dashboard (Flux de missions) ─────────────────────── -->
+        <div v-if="activeTab === 'dashboard'" class="space-y-8 pb-20">
+          <!-- Greeting Header -->
+          <header class="flex justify-between items-start">
+            <div class="flex-1">
+              <h1 class="font-headline font-bold text-5xl text-on-surface mb-2">
+                Marhaba, {{ store.userName || 'Freelancer' }}
+              </h1>
+              <p class="text-on-surface-variant font-medium text-lg italic">
+                Mettez en valeur votre talent et trouvez de nouvelles opportunités
+              </p>
             </div>
-            <div class="mt-8 flex items-center gap-4">
-              <div class="flex -space-x-3">
-                <div v-for="i in 3" :key="i" class="w-10 h-10 rounded-full border-2 border-white bg-surface-container flex items-center justify-center overflow-hidden">
-                   <span class="material-symbols-outlined text-sm opacity-30">person</span>
-                </div>
-                <div class="w-10 h-10 rounded-full border-2 border-white bg-primary text-white flex items-center justify-center text-[10px] font-bold shadow-lg shadow-primary/20">+12</div>
-              </div>
-              <p class="text-xs text-on-surface-variant font-bold italic opacity-70">Collaborations en cours</p>
-            </div>
-          </div>
+            <button @click="openNewBrief" class="flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-full font-bold text-sm hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/30 flex-shrink-0">
+              <span class="material-symbols-outlined text-sm">add</span>
+              +Nouveau brief
+            </button>
+          </header>
 
-          <!-- Liste des talents suggérés (Reseautage) -->
-          <div class="bg-surface-container-low/40 backdrop-blur-md p-8 rounded-[2.5rem] border border-primary/5 flex-1 shadow-inner">
-            <div class="flex justify-between items-center mb-8">
-              <h4 class="font-headline text-xl font-bold text-primary italic">Nouveaux talents</h4>
-              <a class="text-on-surface-variant text-xs font-bold uppercase tracking-widest hover:text-primary transition-colors" href="#">Voir tout</a>
-            </div>
-            <div class="flex flex-col gap-4">
-              <div v-for="talent in talents" :key="talent.name" class="flex items-center gap-4 p-4 rounded-2xl bg-white/50 border border-transparent hover:border-primary/10 hover:bg-white transition-all shadow-sm group">
-                <img :alt="talent.name" class="w-12 h-12 rounded-full object-cover shadow-sm group-hover:scale-110 transition-transform" :src="talent.avatar">
-                <div class="flex-grow min-w-0">
-                   <p class="text-sm font-bold truncate">{{ talent.name }}</p>
-                   <p class="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest opacity-60">{{ talent.skill }}</p>
-                </div>
-                <div class="bg-tertiary-container/30 p-2 rounded-xl">
-                   <span class="material-symbols-outlined text-tertiary text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Liste des missions actives (Droite) -->
-        <section class="col-span-12 lg:col-span-8 flex flex-col gap-8">
-          <div class="flex items-baseline justify-between mb-2">
-            <h2 class="font-headline text-3xl font-bold text-on-surface">Missions en cours</h2>
-            <p class="text-on-surface-variant text-sm font-bold italic opacity-60">Projets que vous réalisez actuellement</p>
-          </div>
-
-          <!-- Carte de Mission (Design Premium) -->
-          <div v-for="mission in activeMissions" :key="mission.id" 
-               class="bg-white rounded-[2.5rem] overflow-hidden shadow-2xl shadow-primary/5 flex flex-col md:flex-row border border-primary/5 group transition-all hover:translate-y-[-4px]">
-            <div class="w-full md:w-60 h-60 md:h-auto overflow-hidden relative">
-              <img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" :src="mission.image">
-              <div class="absolute top-4 left-4" v-if="mission.urgent">
-                <span class="bg-secondary text-white text-[10px] px-4 py-1.5 rounded-full font-black uppercase tracking-widest shadow-lg shadow-secondary/30">Livrable proche</span>
-              </div>
-            </div>
-            <div class="flex-grow p-10 flex flex-col justify-between">
+          <!-- Search & Filter Section -->
+          <div class="bg-white rounded-[2rem] border border-primary/10 shadow-sm p-6 space-y-4">
+            <h3 class="font-headline text-sm font-bold text-on-surface uppercase tracking-widest">Filtrer et chercher</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <!-- Search input -->
               <div>
-                <div class="flex justify-between items-start mb-6">
-                  <div>
-                    <h3 class="font-headline text-2xl font-bold mb-1 text-on-surface group-hover:text-primary transition-colors">{{ mission.title }}</h3>
-                    <p class="text-on-surface-variant text-sm font-bold opacity-60 italic">Client: {{ mission.client }}</p>
-                  </div>
-                  <div class="text-right">
-                    <p class="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-1">Gains prévus</p>
-                    <p class="font-bold text-2xl text-on-surface">{{ mission.budget }} <span class="text-xs text-primary font-black">MAD</span></p>
-                  </div>
-                </div>
-                <!-- Barre de progression de la mission -->
-                <div class="mt-8">
-                  <div class="flex justify-between text-[10px] font-black uppercase tracking-widest mb-2 text-primary">
-                    <span>Avancement du projet</span>
-                    <span>{{ mission.progress }}%</span>
-                  </div>
-                  <div class="h-2 w-full bg-surface-container rounded-full overflow-hidden shadow-inner">
-                    <div class="h-full bg-primary rounded-full transition-all duration-1000" :style="{ width: mission.progress + '%' }"></div>
-                  </div>
+                <label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-2">Rechercher</label>
+                <div class="relative">
+                  <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+                  <input
+                    v-model="localSearch"
+                    @input="applyFilters"
+                    placeholder="Titre, description..."
+                    class="w-full bg-surface-container border border-primary/10 rounded-xl pl-10 pr-3 py-2 text-xs focus:border-primary focus:outline-none transition-colors"
+                  />
                 </div>
               </div>
-              <div class="mt-10 flex justify-end gap-4">
-                <button class="px-8 py-3 text-primary text-sm font-black uppercase tracking-widest hover:underline transition-all">Détails</button>
-                <button class="px-8 py-3 bg-surface-container text-on-surface rounded-full text-xs font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all shadow-sm">Déposer livrable</button>
+
+              <!-- Category filter -->
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-2">Catégorie</label>
+                <select
+                  v-model="localCategory"
+                  @change="applyFilters"
+                  class="w-full bg-surface-container border border-primary/10 rounded-xl px-3 py-2 text-xs focus:border-primary focus:outline-none transition-colors"
+                >
+                  <option value="">Toutes les catégories</option>
+                  <option value="design">Design</option>
+                  <option value="dev">Développement</option>
+                  <option value="marketing">Marketing</option>
+                  <option value="construction">Construction</option>
+                  <option value="other">Autres</option>
+                </select>
+              </div>
+
+              <!-- Budget filter -->
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-2">Budget max (DH)</label>
+                <input
+                  v-model="maxBudget"
+                  @input="applyFilters"
+                  type="number"
+                  placeholder="Ex: 10000"
+                  class="w-full bg-surface-container border border-primary/10 rounded-xl px-3 py-2 text-xs focus:border-primary focus:outline-none transition-colors"
+                />
+              </div>
+
+              <!-- Reset button -->
+              <div class="flex items-end">
+                <button
+                  @click="resetFilters"
+                  class="w-full px-4 py-2 rounded-xl border border-primary text-primary bg-primary/5 font-bold text-xs hover:bg-primary/10 transition-colors flex items-center justify-center gap-2"
+                >
+                  <span class="material-symbols-outlined text-sm">filter_alt_off</span>
+                  Réinitialiser
+                </button>
               </div>
             </div>
           </div>
-        </section>
-      </div>
 
-      <!-- Rubrique Conciergerie / Aide (En bas) -->
-      <section class="mt-16 mx-4 bg-primary text-white p-16 rounded-[3rem] shadow-2xl relative overflow-hidden group">
-        <div class="absolute inset-0 zellige-pattern opacity-10 group-hover:scale-110 transition-transform duration-[20s]"></div>
-        <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
-          <div class="max-w-2xl text-center md:text-left">
-            <h2 class="font-headline text-4xl font-bold mb-6 italic leading-tight">Gérez votre fiscalité avec MorLancer Pay</h2>
-            <p class="text-white/80 font-medium text-lg leading-relaxed">Récupérez vos gains en toute sécurité via PayPal ou Payoneer, avec une gestion automatisée de vos factures.</p>
-          </div>
-          <button class="bg-secondary text-white px-12 py-5 rounded-full font-black text-sm uppercase tracking-[0.2em] shadow-2xl hover:scale-105 active:scale-95 transition-all flex-shrink-0">
-            Configurer mes paiements
-          </button>
+          <!-- Missions Section -->
+          <section>
+            <div class="flex items-baseline justify-between mb-6">
+              <div>
+                <h2 class="font-headline text-3xl font-bold text-on-surface">Missions recommandées</h2>
+                <p class="text-sm text-on-surface-variant mt-1">{{ filteredMissions.length }} mission{{ filteredMissions.length !== 1 ? 's' : '' }} trouvée{{ filteredMissions.length !== 1 ? 's' : '' }}</p>
+              </div>
+              <div v-if="loading" class="flex items-center gap-2 text-on-surface-variant">
+                <span class="material-symbols-outlined text-sm animate-spin">progress_activity</span>
+                <span class="text-sm">Chargement...</span>
+              </div>
+            </div>
+            
+            <!-- No results state -->
+            <div v-if="!loading && filteredMissions.length === 0" class="bg-surface-container-low p-12 rounded-[2.5rem] text-center border border-primary/5">
+              <span class="material-symbols-outlined text-8xl text-on-surface-variant/30 mb-4" style="font-variation-settings: 'wght' 200">search_off</span>
+              <h3 class="font-headline text-2xl font-bold text-on-surface mb-2">Aucune mission trouvée</h3>
+              <p class="text-on-surface-variant font-medium mb-6">Essayez d'ajuster vos critères de recherche ou de retirer les filtres.</p>
+              <button @click="resetFilters" class="px-6 py-2 bg-surface text-primary rounded-full font-bold text-sm shadow-sm border border-primary/10 hover:bg-primary/5 transition-all">
+                Réinitialiser les filtres
+              </button>
+            </div>
+
+            <!-- Missions Grid -->
+            <div v-else class="grid grid-cols-1 gap-6">
+              <MissionCard 
+                v-for="mission in filteredMissions" 
+                :key="mission.id" 
+                :mission="mission"
+                @mission-updated="loadMissions"
+              />
+            </div>
+          </section>
         </div>
-      </section>
-    </main>
+
+        <!-- ── Onglet : Mes Briefs ─────────────────────────────────────────── -->
+        <div v-if="activeTab === 'briefs'" class="px-4">
+          <h1 class="font-headline font-bold text-4xl text-on-surface mb-2">Mes Briefs</h1>
+          <p class="text-on-surface-variant text-sm mb-8">Briefs que vous avez publiés pour d'autres freelancers</p>
+          <div class="bg-surface-container-low p-8 rounded-[2rem] text-center border border-primary/5">
+            <span class="material-symbols-outlined text-5xl text-on-surface-variant/30 block mb-3">briefcase</span>
+            <p class="text-on-surface-variant">Vous n'avez pas encore publié de briefs.</p>
+          </div>
+        </div>
+
+        <!-- ── Onglet : Messages ───────────────────────────────────────────── -->
+        <div v-if="activeTab === 'messages'" class="px-4">
+          <h1 class="font-headline font-bold text-4xl text-on-surface mb-2">Messages</h1>
+          <p class="text-on-surface-variant text-sm mb-8">Vos conversations avec les clients</p>
+          <div class="bg-surface-container-low p-8 rounded-[2rem] text-center border border-primary/5">
+            <span class="material-symbols-outlined text-5xl text-on-surface-variant/30 block mb-3">chat_bubble</span>
+            <p class="text-on-surface-variant">Aucun message pour le moment.</p>
+          </div>
+        </div>
+
+        <!-- ── Onglet : Paiements ──────────────────────────────────────────── -->
+        <div v-if="activeTab === 'payments'" class="px-4">
+          <h1 class="font-headline font-bold text-4xl text-on-surface mb-2">Paiements</h1>
+          <p class="text-on-surface-variant text-sm mb-8">Historique et gestion des paiements</p>
+          <div class="bg-surface-container-low p-8 rounded-[2rem] text-center border border-primary/5">
+            <span class="material-symbols-outlined text-5xl text-on-surface-variant/30 block mb-3">payments</span>
+            <p class="text-on-surface-variant">Aucun paiement enregistré.</p>
+          </div>
+        </div>
+
+        <!-- ── Onglet : Contrats ───────────────────────────────────────────── -->
+        <div v-if="activeTab === 'contracts'" class="px-4">
+          <h1 class="font-headline font-bold text-4xl text-on-surface mb-2">Contrats</h1>
+          <p class="text-on-surface-variant text-sm mb-8">Gestion de vos contrats en cours et passés</p>
+          <div class="bg-surface-container-low p-8 rounded-[2rem] text-center border border-primary/5">
+            <span class="material-symbols-outlined text-5xl text-on-surface-variant/30 block mb-3">description</span>
+            <p class="text-on-surface-variant">Aucun contrat en cours.</p>
+          </div>
+        </div>
+
+        <!-- ── Onglet : Profil ─────────────────────────────────────────────── -->
+        <div v-if="activeTab === 'profile'" class="px-4">
+          <h1 class="font-headline font-bold text-4xl text-on-surface mb-2">Profil</h1>
+          <p class="text-on-surface-variant text-sm mb-8">Configuration de votre page talent</p>
+          <div class="bg-surface-container-low p-8 rounded-[2rem] text-center border border-primary/5">
+            <span class="material-symbols-outlined text-5xl text-on-surface-variant/30 block mb-3">person</span>
+            <p class="text-on-surface-variant">Gérez votre profil professionnel.</p>
+          </div>
+        </div>
+      </main>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed, onMounted } from 'vue'
+import TopNavBar from '@/components/Common/TopNavBar.vue'
+import Sidebar from '@/components/Freelancer/Sidebar.vue'
+import MissionCard from '@/components/Freelancer/MissionCard.vue'
+import { useFreelancerStore } from '@/stores/freelancer'
+import axios from 'axios'
 
-/**
- * Variables réactives pour stocker les informations de l'utilisateur.
- * ref() permet à Vue de mettre à jour l'interface quand la donnée change.
- */
-const userName = ref('Soufiane');
-const balance = ref('14,250.00');
+const store = useFreelancerStore()
+const activeTab = ref('dashboard')
+const loading = ref(false)
 
-/**
- * Liste statique (pour la démo) de suggestions de freelances.
- */
-const talents = ref([
-  { name: 'Yasmine B.', skill: 'Design Zellige', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80' },
-  { name: 'Omar K.', skill: 'Architecture Int.', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80' }
-]);
+// Local search/filter state
+const localSearch = ref('')
+const localCategory = ref('')
+const maxBudget = ref('')
 
-/**
- * Données réactives pour les missions en cours.
- */
-const activeMissions = ref([
-  { 
-    id: 1, 
-    title: 'Rénovation Salon Riadh', 
-    client: 'Mehdi El Fassi', 
-    budget: '8,500', 
-    progress: 75, 
-    urgent: true,
-    image: 'https://images.unsplash.com/photo-1590483736622-39da8af7541c?auto=format&fit=crop&w=400&q=80'
+// All missions from API
+const allMissions = ref([
+  {
+    id: 101,
+    title: 'Design Logo Artisanat Moderne',
+    description: 'Nous cherchons un designer pour concevoir un logo alliant les zelliges traditionnels et une typographie moderne pour notre nouvelle marque de vêtements.',
+    budget: 2500,
+    price: '2500',
+    deadline: '10 Jours',
+    categories: ['Design', 'Branding'],
+    categorySlug: 'design',
+    clientName: 'Boutique Atlas',
+    client: { id: 1, name: 'Boutique Atlas' },
+    likes: 12,
+    comments: 3,
+    commentsList: [
+      { author: 'Yasmine B.', text: 'Est-ce que vous avez des couleurs préférées ?' }
+    ]
   },
-  { 
-    id: 2, 
-    title: 'Mobilier sur mesure - Noyer', 
-    client: 'Sarah M.', 
-    budget: '12,000', 
-    progress: 32, 
-    urgent: false,
-    image: 'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?auto=format&fit=crop&w=400&q=80'
+  {
+    id: 102,
+    title: 'Développement Site E-commerce',
+    description: 'Mise en place d\'une boutique en ligne complète (frontend & backend) pour vendre de la poterie de Safi à l\'international.',
+    budget: 15000,
+    price: '15000',
+    deadline: '1 Mois',
+    categories: ['Dev', 'E-commerce'],
+    categorySlug: 'dev',
+    clientName: 'Poterie Safi Exp',
+    client: { id: 2, name: 'Poterie Safi Exp' },
+    likes: 45,
+    comments: 8,
+    commentsList: []
+  },
+  {
+    id: 103,
+    title: 'Campagne Marketing Réseaux Sociaux',
+    description: 'Besoin d\'un expert pour gérer la promotion de nos tapis berbères sur Instagram. Création de contenu et publicités.',
+    budget: 5000,
+    price: '5000',
+    deadline: 'En continu',
+    categories: ['Marketing', 'Ads'],
+    categorySlug: 'marketing',
+    clientName: 'Tissages du Haut',
+    client: { id: 3, name: 'Tissages du Haut' },
+    likes: 22,
+    comments: 1,
+    commentsList: []
+  },
+  {
+    id: 104,
+    title: 'Application Mobile de Livraison',
+    description: 'Nous recherchons un développeur Flutter/React Native pour une app de livraison spécialisée dans l\'artisanat lourd.',
+    budget: 20000,
+    price: '20000',
+    deadline: '3 Mois',
+    categories: ['Dev', 'Mobile'],
+    categorySlug: 'dev',
+    clientName: 'Atlas Deliver',
+    client: { id: 4, name: 'Atlas Deliver' },
+    likes: 56,
+    comments: 12,
+    commentsList: []
   }
-]);
+])
+
+// Filtered missions based on search/filters
+const filteredMissions = computed(() => {
+  let result = allMissions.value
+
+  const query = localSearch.value?.toLowerCase().trim()
+  if (query) {
+    result = result.filter(m => 
+      m.title.toLowerCase().includes(query) || 
+      m.description.toLowerCase().includes(query)
+    )
+  }
+
+  const category = localCategory.value
+  if (category) {
+    result = result.filter(m => m.categorySlug === category)
+  }
+
+  if (maxBudget.value) {
+    const max = parseInt(maxBudget.value)
+    result = result.filter(m => m.budget <= max)
+  }
+
+  return result
+})
+
+// Apply filters
+const applyFilters = () => {
+  store.searchQuery = localSearch.value
+  store.searchCategory = localCategory.value
+}
+
+// Reset all filters
+const resetFilters = () => {
+  localSearch.value = ''
+  localCategory.value = ''
+  maxBudget.value = ''
+  store.searchQuery = ''
+  store.searchCategory = ''
+}
+
+// Load missions from API
+const loadMissions = async () => {
+  loading.value = true
+  try {
+    const response = await axios.get(
+      'http://localhost:8000/api/freelancer/missions',
+      { headers: store.authHeaders }
+    )
+    // If API returns data, use it; otherwise use mock data
+    if (response.data && response.data.length > 0) {
+      allMissions.value = response.data
+    }
+  } catch (error) {
+    console.log('Using mock missions (API not available)')
+  } finally {
+    loading.value = false
+  }
+}
+
+// Open new brief modal
+const openNewBrief = () => {
+  alert('Nouvelle fonctionnalité de création de brief non encore disponible')
+}
+
+// Load missions on mount
+onMounted(() => {
+  loadMissions()
+})
 </script>
 
 <style scoped>
-/**
- * Styles locaux au composant. 
- * .zellige-pattern : Applique le motif géométrique marocain discret.
- */
 .zellige-pattern {
-  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l15 15-15 15-15-15zM0 30l15 15-15 15-15-15zM60 30l15 15-15 15-15-15zM30 60l15-15-15-15-15 15z' fill='%23006233' fill-opacity='0.03'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l5 25h25l-20 15 8 20-18-12-18 12 8-20L0 25h25z' fill='%23006233' fill-opacity='0.03' fill-rule='evenodd'/%3E%3C/svg%3E");
 }
 </style>
