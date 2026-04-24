@@ -25,7 +25,7 @@
           <div class="flex items-center justify-between">
             <button @click="showNewBriefModal = true"
               class="flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-full font-bold text-sm hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/30">
-              <span class="material-symbols-outlined text-sm">add</span>+ Nouvelle mission
+              <span class="material-symbols-outlined text-sm">add</span>Nouvelle mission
             </button>
             <div class="flex items-center gap-3">
               <p class="text-sm text-gray-500"><span class="font-bold text-primary">{{ briefs.length }}</span> mission(s)</p>
