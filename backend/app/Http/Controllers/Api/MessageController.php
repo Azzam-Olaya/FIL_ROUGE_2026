@@ -31,7 +31,7 @@ class MessageController extends Controller
             if (!isset($conversations[$otherId])) {
                 $other = $msg->sender_id === $userId ? $msg->receiver : $msg->sender;
                 $conversations[$otherId] = [
-                    'user_id'     => $otherId,
+                    'user_id'     => (int) $otherId,
                     'name'        => $other?->name ?? 'Utilisateur',
                     'initials'    => $this->initials($other?->name),
                     'lastMessage' => $msg->content,
@@ -49,7 +49,8 @@ class MessageController extends Controller
      */
     public function getMessages(Request $request, $userId)
     {
-        $me = $request->user()->id;
+        $me     = (int) $request->user()->id;
+        $userId = (int) $userId;
 
         // Marquer comme lus les messages reçus
         Message::where('sender_id', $userId)
@@ -58,15 +59,13 @@ class MessageController extends Controller
             ->update(['read_at' => now()]);
 
         $messages = Message::conversation($me, $userId)
-            ->with(['sender', 'receiver'])
             ->orderBy('created_at', 'asc')
             ->get()
             ->map(fn($m) => [
-                'id'        => $m->id,
-                'sender'    => $m->sender_id === $me ? 'me' : 'other',
-                'text'      => $m->content,
-                'time'      => $m->created_at->format('H:i'),
-                'created_at'=> $m->created_at,
+                'id'     => $m->id,
+                'sender' => ((int)$m->sender_id === $me) ? 'me' : 'other',
+                'text'   => $m->content,
+                'time'   => $m->created_at->format('H:i'),
             ]);
 
         return response()->json($messages);
@@ -114,6 +113,20 @@ class MessageController extends Controller
                 ->orderBy('created_at', 'asc')
                 ->get()
         );
+    }
+
+    public function searchUsers(Request $request)
+    {
+        $q      = $request->get('q', '');
+        $userId = $request->user()->id;
+
+        $users = User::where('id', '!=', $userId)
+            ->where('name', 'like', "%{$q}%")
+            ->with('role')
+            ->limit(10)
+            ->get();
+
+        return response()->json($users);
     }
 
     private function initials(?string $name): string
