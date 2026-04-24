@@ -49,13 +49,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('freelancer')->group(function () {
         Route::get('/stats', [FreelancerController::class, 'getStats']);
         Route::get('/balance', [FreelancerController::class, 'getBalance']);
-        Route::get('/missions/active', [FreelancerController::class, 'getActiveMissions']);
-        Route::get('/categories', [FreelancerController::class, 'getCategories']);
-        Route::get('/missions', [FreelancerController::class, 'getAvailableMissions']);
-        Route::post('/missions/{id}/like', [FreelancerController::class, 'toggleMissionLike']);
-        Route::post('/missions/{id}/comment', [FreelancerController::class, 'addMissionComment']);
-        Route::get('/missions/{id}/comments', [FreelancerController::class, 'getMissionComments']);
-        Route::get('/missions/published', [FreelancerController::class, 'getPublishedMissions']);
         Route::get('/briefs', [FreelancerController::class, 'getBriefs']);
         Route::get('/briefs/mine', [FreelancerController::class, 'getMyBriefs']);
         Route::post('/briefs', [FreelancerController::class, 'storeBrief']);
@@ -63,6 +56,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/briefs/{id}/comment', [FreelancerController::class, 'addComment']);
         Route::get('/briefs/{id}/comments', [FreelancerController::class, 'getComments']);
         Route::post('/briefs/{id}/favorite', [FreelancerController::class, 'toggleFavorite']);
+        Route::get('/missions', [FreelancerController::class, 'getAvailableMissions']);
+        Route::get('/missions/active', [FreelancerController::class, 'getActiveMissions']);
+        Route::post('/missions/{id}/like', [FreelancerController::class, 'toggleMissionLike']);
+        Route::post('/missions/{id}/comment', [FreelancerController::class, 'addMissionComment']);
+        Route::get('/missions/{id}/comments', [FreelancerController::class, 'getMissionComments']);
         Route::get('/favorites', [FreelancerController::class, 'getMyFavorites']);
         Route::get('/payments', [FreelancerController::class, 'getPayments']);
         Route::get('/profile', [FreelancerController::class, 'getProfile']);
@@ -72,7 +70,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/suggested', [FreelancerController::class, 'getSuggestedFreelancers']);
     });
 
-    // Messages
+    // Messages & Search
+    Route::get('/users/search', [\App\Http\Controllers\Api\MessageController::class, 'searchUsers']);
     Route::get('/conversations', [\App\Http\Controllers\Api\MessageController::class, 'getConversations']);
     Route::get('/conversations/{userId}', [\App\Http\Controllers\Api\MessageController::class, 'getMessages']);
     Route::post('/messages', [\App\Http\Controllers\Api\MessageController::class, 'sendMessage']);
