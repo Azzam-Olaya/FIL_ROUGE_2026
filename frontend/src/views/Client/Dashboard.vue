@@ -14,7 +14,7 @@
           <!-- Greeting -->
           <header>
             <h1 class="font-headline font-bold text-4xl text-on-surface mb-1">
-              Marhba, <span class="text-primary">{{ store.userName }}</span> 👋
+              Marhba <span class="text-primary">{{ store.userName }}</span> 👋
             </h1>
             <p class="text-on-surface-variant font-medium text-base italic">
               Transformez vos idées en succès avec des freelances expérimentés
