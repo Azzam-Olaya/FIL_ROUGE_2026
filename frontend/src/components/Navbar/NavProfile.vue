@@ -18,9 +18,9 @@
           </div>
         </div>
         <div class="py-2">
-          <button @click="navigate('/freelancer/dashboard')"
+          <button @click="navigate('/freelancer/dashboard', 'profile')"
             class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface hover:bg-primary/10 transition-colors text-left">
-            <span class="material-symbols-outlined text-base text-on-surface-variant">dashboard</span>Dashboard
+            <span class="material-symbols-outlined text-base text-on-surface-variant">person</span>Profil
           </button>
           <button @click="navigate('/freelancer/dashboard', 'messages')"
             class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface hover:bg-primary/10 transition-colors text-left">
@@ -29,7 +29,7 @@
           <div class="border-t border-primary/5 my-1"></div>
           <button @click="logout"
             class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-secondary hover:bg-secondary/10 transition-colors text-left">
-            <span class="material-symbols-outlined text-base">logout</span>Déconnexion
+            <span class="material-symbols-outlined text-base">logout</span>Se déconnecter
           </button>
         </div>
       </div>
@@ -49,7 +49,12 @@ const containerRef = ref(null)
 
 const navigate = (path, tab) => {
   open.value = false
-  router.push(tab ? { path, query: { tab } } : path)
+  if (tab) {
+    router.push({ path, query: { tab } })
+    window.dispatchEvent(new CustomEvent('freelancer-tab', { detail: tab }))
+  } else {
+    router.push(path)
+  }
 }
 
 const logout = () => { localStorage.clear(); window.location.href = '/login' }
