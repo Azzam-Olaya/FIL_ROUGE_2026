@@ -13,67 +13,26 @@
           <header class="flex justify-between items-start">
             <div class="flex-1">
               <h1 class="font-headline font-bold text-5xl text-on-surface mb-2">
-                Marhaba, {{ store.userName }}
+                Marhba {{ store.userName }}
               </h1>
               <p class="text-on-surface-variant font-medium text-lg italic">
                 Mettez en valeur votre talent et trouvez de nouvelles opportunités
               </p>
             </div>
-            <button @click="openNewBrief"
+            <button @click="showNewBriefModal = true"
               class="flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-full font-bold text-sm hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/30 flex-shrink-0">
               <span class="material-symbols-outlined text-sm">add</span>
-              +Nouveau brief
+              Nouveau brief
             </button>
           </header>
-
-          <!-- Filters -->
-          <div class="bg-white rounded-[2rem] border border-primary/10 shadow-sm p-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div>
-                <label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-2">Rechercher</label>
-                <div class="relative">
-                  <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
-                  <input v-model="localSearch" @input="applyFilters" placeholder="Titre, description..."
-                    class="w-full bg-surface-container border border-primary/10 rounded-xl pl-10 pr-3 py-2 text-xs focus:border-primary focus:outline-none transition-colors" />
-                </div>
-              </div>
-
-              <div>
-                <label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-2">Catégorie</label>
-                <select v-model="localCategory" @change="applyFilters"
-                  class="w-full bg-surface-container border border-primary/10 rounded-xl px-3 py-2 text-xs focus:border-primary focus:outline-none transition-colors">
-                  <option value="">Toutes les catégories</option>
-                  <option value="design">Design</option>
-                  <option value="dev">Développement</option>
-                  <option value="marketing">Marketing</option>
-                  <option value="construction">Construction</option>
-                  <option value="other">Autres</option>
-                </select>
-              </div>
-
-              <div>
-                <label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-2">Budget max (DH)</label>
-                <input v-model="maxBudget" @input="applyFilters" type="number" placeholder="Ex: 10000"
-                  class="w-full bg-surface-container border border-primary/10 rounded-xl px-3 py-2 text-xs focus:border-primary focus:outline-none transition-colors" />
-              </div>
-
-              <div class="flex items-end">
-                <button @click="resetFilters"
-                  class="w-full px-4 py-2 rounded-xl border border-primary text-primary bg-primary/5 font-bold text-xs hover:bg-primary/10 transition-colors flex items-center justify-center gap-2">
-                  <span class="material-symbols-outlined text-sm">filter_alt_off</span>
-                  Réinitialiser
-                </button>
-              </div>
-            </div>
-          </div>
 
           <!-- Mission feed -->
           <section>
             <div class="flex items-baseline justify-between mb-6">
               <div>
-                <h2 class="font-headline text-3xl font-bold text-on-surface">Missions recommandées</h2>
+                <h2 class="font-headline text-3xl font-bold text-on-surface">Missions des clients</h2>
                 <p class="text-sm text-on-surface-variant mt-1">
-                  {{ filteredMissions.length }} mission{{ filteredMissions.length !== 1 ? 's' : '' }} trouvée{{ filteredMissions.length !== 1 ? 's' : '' }}
+                  {{ allMissions.length }} mission{{ allMissions.length !== 1 ? 's' : '' }} disponible{{ allMissions.length !== 1 ? 's' : '' }}
                 </p>
               </div>
               <div v-if="loading" class="flex items-center gap-2 text-on-surface-variant">
@@ -82,18 +41,15 @@
               </div>
             </div>
 
-            <div v-if="!loading && filteredMissions.length === 0"
+            <div v-if="!loading && allMissions.length === 0"
               class="bg-surface-container-low p-12 rounded-[2.5rem] text-center border border-primary/5">
-              <span class="material-symbols-outlined text-8xl text-on-surface-variant/30 mb-4" style="font-variation-settings: 'wght' 200">search_off</span>
-              <h3 class="font-headline text-2xl font-bold text-on-surface mb-2">Aucune mission trouvée</h3>
-              <button @click="resetFilters" class="mt-4 px-6 py-2 bg-surface text-primary rounded-full font-bold text-sm border border-primary/10 hover:bg-primary/5 transition-all">
-                Réinitialiser les filtres
-              </button>
+              <span class="material-symbols-outlined text-8xl text-on-surface-variant/30 mb-4" style="font-variation-settings: 'wght' 200">work_off</span>
+              <h3 class="font-headline text-2xl font-bold text-on-surface mb-2">Aucune mission disponible</h3>
             </div>
 
             <div v-else class="grid grid-cols-1 gap-6">
               <MissionCard
-                v-for="mission in filteredMissions"
+                v-for="mission in allMissions"
                 :key="mission.id"
                 :mission="mission"
                 @mission-updated="loadMissions"
@@ -103,12 +59,47 @@
         </div>
 
         <!-- ── Mes Briefs ─────────────────────────────────────────────────── -->
-        <div v-if="activeTab === 'briefs'" class="px-4">
-          <h1 class="font-headline font-bold text-4xl text-on-surface mb-2">Mes Briefs</h1>
-          <p class="text-on-surface-variant text-sm mb-8">Briefs que vous avez publiés</p>
-          <div class="bg-surface-container-low p-8 rounded-[2rem] text-center border border-primary/5">
-            <span class="material-symbols-outlined text-5xl text-on-surface-variant/30 block mb-3">briefcase</span>
-            <p class="text-on-surface-variant">Vous n'avez pas encore publié de briefs.</p>
+        <div v-if="activeTab === 'briefs'" class="space-y-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h1 class="font-headline font-bold text-4xl text-on-surface mb-1">Mes Briefs</h1>
+              <p class="text-on-surface-variant text-sm">Briefs que vous avez publiés</p>
+            </div>
+            <button @click="showNewBriefModal = true"
+              class="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-full font-bold text-sm hover:scale-105 transition-all shadow-lg shadow-primary/20">
+              <span class="material-symbols-outlined text-sm">add</span>Nouveau brief
+            </button>
+          </div>
+          <div v-if="loadingBriefs" class="flex justify-center py-16">
+            <span class="material-symbols-outlined text-4xl text-primary/30 animate-spin">progress_activity</span>
+          </div>
+          <div v-else-if="!myBriefs.length" class="text-center py-20 bg-white rounded-[2rem] border border-primary/5">
+            <span class="material-symbols-outlined text-5xl text-gray-300 block mb-3">briefcase</span>
+            <p class="text-gray-400 font-medium">Vous n'avez pas encore publié de briefs.</p>
+            <button @click="showNewBriefModal = true" class="mt-4 text-primary text-sm font-bold hover:underline">Publier votre premier brief</button>
+          </div>
+          <div v-else class="grid grid-cols-1 gap-6">
+            <div v-for="b in myBriefs" :key="b.id" class="bg-white rounded-[2rem] border border-primary/5 p-6 shadow-sm">
+              <div class="flex items-start justify-between gap-4 mb-3">
+                <div>
+                  <span class="text-[10px] font-bold uppercase tracking-widest text-white bg-primary px-3 py-1 rounded-full">{{ b.category?.name || 'Sans catégorie' }}</span>
+                  <h3 class="font-bold text-lg text-on-surface mt-2">{{ b.title }}</h3>
+                  <p class="text-sm text-on-surface-variant mt-1 line-clamp-2">{{ b.description }}</p>
+                </div>
+                <div class="text-right flex-shrink-0">
+                  <p class="font-black text-xl text-primary">{{ b.price }} DH</p>
+                  <p class="text-xs text-on-surface-variant mt-0.5">{{ b.duration }}</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-4 text-xs text-on-surface-variant pt-3 border-t border-primary/5">
+                <span class="flex items-center gap-1">
+                  <span class="material-symbols-outlined text-sm">favorite</span>{{ b.likes_count || 0 }} j'aime
+                </span>
+                <span class="flex items-center gap-1">
+                  <span class="material-symbols-outlined text-sm">chat_bubble</span>{{ b.comments_count || 0 }} commentaires
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -162,56 +153,83 @@
 
       </main>
     </div>
+
+    <!-- Nouveau Brief Modal -->
+    <Teleport to="body">
+      <div v-if="showNewBriefModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" @click.self="showNewBriefModal = false">
+        <div class="bg-white rounded-[2rem] shadow-2xl max-w-lg w-full p-8 animate-in">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="font-headline text-2xl font-bold text-on-surface">Nouveau Brief</h2>
+            <button @click="showNewBriefModal = false" class="p-2 hover:bg-primary/10 rounded-full transition-colors">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+          <form @submit.prevent="submitBrief" class="space-y-4">
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-1">Titre *</label>
+              <input v-model="newBrief.title" required placeholder="Ex: Expert en design UI/UX"
+                class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary transition-colors" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-1">Description *</label>
+              <textarea v-model="newBrief.description" required rows="6" placeholder="Décrivez vos compétences et ce que vous proposez..."
+                class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary transition-colors resize-none" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-1">Catégorie *</label>
+              <select v-model="newBrief.category_id" required
+                class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary transition-colors">
+                <option value="">Sélectionner une catégorie</option>
+                <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
+              </select>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-1">Prix (DH) *</label>
+                <input v-model="newBrief.price" type="number" min="0" required placeholder="5000"
+                  class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary transition-colors" />
+              </div>
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-1">Période de réalisation *</label>
+                <input v-model="newBrief.duration" required placeholder="Ex: 2 semaines"
+                  class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary transition-colors" />
+              </div>
+            </div>
+            <div class="flex gap-3 pt-2">
+              <button type="button" @click="showNewBriefModal = false"
+                class="flex-1 px-4 py-2.5 rounded-full border border-primary text-primary font-bold text-sm hover:bg-primary/5 transition-colors">Annuler</button>
+              <button type="submit" :disabled="submittingBrief"
+                class="flex-1 px-4 py-2.5 rounded-full bg-primary text-white font-bold text-sm disabled:opacity-50 hover:scale-105 transition-transform flex items-center justify-center gap-2">
+                <span v-if="submittingBrief" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                <span v-else>Publier</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import TopNavBar     from '@/components/Common/TopNavBar.vue'
-import Sidebar       from '@/components/Freelancer/Sidebar.vue'
-import MissionCard   from '@/components/Freelancer/MissionCard.vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import TopNavBar      from '@/components/Common/TopNavBar.vue'
+import Sidebar        from '@/components/Freelancer/Sidebar.vue'
+import MissionCard    from '@/components/Freelancer/MissionCard.vue'
 import MessagingPanel from '@/components/Common/MessagingPanel.vue'
-import PaymentTab    from '@/components/Common/PaymentTab.vue'
-import ContractTab   from '@/components/Common/ContractTab.vue'
+import PaymentTab     from '@/components/Common/PaymentTab.vue'
+import ContractTab    from '@/components/Common/ContractTab.vue'
 import { useFreelancerStore } from '@/stores/freelancer'
 import axios from 'axios'
 
 const store     = useFreelancerStore()
-const activeTab = ref('dashboard')
-const loading   = ref(false)
+const route     = useRoute()
+const activeTab = ref(route.query.tab || 'dashboard')
 
-const localSearch   = ref('')
-const localCategory = ref('')
-const maxBudget     = ref('')
-
-const allMissions = ref([
-  { id: 101, title: 'Design Logo Artisanat Moderne', description: 'Nous cherchons un designer pour concevoir un logo alliant les zelliges traditionnels et une typographie moderne.', budget: 2500, price: '2500', deadline: '10 Jours', categories: ['Design', 'Branding'], categorySlug: 'design', clientName: 'Boutique Atlas', client: { id: 1, name: 'Boutique Atlas' }, likes: 12, comments: 3, favorites_count: 2, commentsList: [] },
-  { id: 102, title: 'Développement Site E-commerce', description: 'Mise en place d\'une boutique en ligne complète (frontend & backend) pour vendre de la poterie de Safi.', budget: 15000, price: '15000', deadline: '1 Mois', categories: ['Dev', 'E-commerce'], categorySlug: 'dev', clientName: 'Poterie Safi Exp', client: { id: 2, name: 'Poterie Safi Exp' }, likes: 45, comments: 8, favorites_count: 5, commentsList: [] },
-  { id: 103, title: 'Campagne Marketing Réseaux Sociaux', description: 'Besoin d\'un expert pour gérer la promotion de nos tapis berbères sur Instagram.', budget: 5000, price: '5000', deadline: 'En continu', categories: ['Marketing', 'Ads'], categorySlug: 'marketing', clientName: 'Tissages du Haut', client: { id: 3, name: 'Tissages du Haut' }, likes: 22, comments: 1, favorites_count: 1, commentsList: [] },
-  { id: 104, title: 'Application Mobile de Livraison', description: 'Nous recherchons un développeur Flutter/React Native pour une app de livraison spécialisée.', budget: 20000, price: '20000', deadline: '3 Mois', categories: ['Dev', 'Mobile'], categorySlug: 'dev', clientName: 'Atlas Deliver', client: { id: 4, name: 'Atlas Deliver' }, likes: 56, comments: 12, favorites_count: 8, commentsList: [] },
-])
-
-const filteredMissions = computed(() => {
-  let result = allMissions.value
-  const query = localSearch.value?.toLowerCase().trim()
-  if (query) result = result.filter(m => m.title.toLowerCase().includes(query) || m.description.toLowerCase().includes(query))
-  if (localCategory.value) result = result.filter(m => m.categorySlug === localCategory.value)
-  if (maxBudget.value) result = result.filter(m => m.budget <= parseInt(maxBudget.value))
-  return result
-})
-
-const applyFilters = () => {
-  store.searchQuery    = localSearch.value
-  store.searchCategory = localCategory.value
-}
-
-const resetFilters = () => {
-  localSearch.value   = ''
-  localCategory.value = ''
-  maxBudget.value     = ''
-  store.searchQuery    = ''
-  store.searchCategory = ''
-}
+// ── Missions (publiées par les clients) ─────────────────────────────────────
+const allMissions = ref([])
+const loading     = ref(false)
 
 const loadMissions = async () => {
   loading.value = true
@@ -219,23 +237,71 @@ const loadMissions = async () => {
     const res = await axios.get('http://localhost:8000/api/freelancer/missions', { headers: store.authHeaders })
     if (res.data?.length > 0) allMissions.value = res.data
   } catch {
-    // keep mock data
-  } finally {
-    loading.value = false
-  }
+    allMissions.value = [
+      { id: 101, title: 'Design Logo Artisanat Moderne', description: 'Nous cherchons un designer pour concevoir un logo alliant les zelliges traditionnels et une typographie moderne pour notre nouvelle marque de vêtements.', budget: 2500, deadline: '10 Jours', categories: ['Design', 'Branding'], categorySlug: 'design', client: { id: 1, name: 'Boutique Atlas' }, likes: 12, comments: 3, favorites_count: 2, commentsList: [] },
+      { id: 102, title: 'Développement Site E-commerce', description: 'Mise en place d\'une boutique en ligne complète (frontend & backend) pour vendre de la poterie de Safi à l\'international.', budget: 15000, deadline: '1 Mois', categories: ['Dev', 'E-commerce'], categorySlug: 'dev', client: { id: 2, name: 'Poterie Safi Exp' }, likes: 45, comments: 8, favorites_count: 5, commentsList: [] },
+      { id: 103, title: 'Campagne Marketing Réseaux Sociaux', description: 'Besoin d\'un expert pour gérer la promotion de nos tapis berbères sur Instagram. Création de contenu et publicités ciblées.', budget: 5000, deadline: 'En continu', categories: ['Marketing', 'Ads'], categorySlug: 'marketing', client: { id: 3, name: 'Tissages du Haut' }, likes: 22, comments: 1, favorites_count: 1, commentsList: [] },
+      { id: 104, title: 'Application Mobile de Livraison', description: 'Nous recherchons un développeur Flutter/React Native pour une app de livraison spécialisée dans l\'artisanat lourd.', budget: 20000, deadline: '3 Mois', categories: ['Dev', 'Mobile'], categorySlug: 'dev', client: { id: 4, name: 'Atlas Deliver' }, likes: 56, comments: 12, favorites_count: 8, commentsList: [] },
+    ]
+  } finally { loading.value = false }
 }
 
-const openNewBrief = () => {
-  alert('Fonctionnalité de création de brief bientôt disponible')
+// ── Mes Briefs (publiés par le freelancer) ──────────────────────────────────
+const myBriefs    = ref([])
+const loadingBriefs = ref(false)
+
+const loadMyBriefs = async () => {
+  loadingBriefs.value = true
+  try {
+    const res = await axios.get('http://localhost:8000/api/freelancer/briefs/mine', { headers: store.authHeaders })
+    myBriefs.value = res.data
+  } catch { myBriefs.value = [] } finally { loadingBriefs.value = false }
 }
+
+// ── Nouveau Brief Modal ─────────────────────────────────────────────────────
+const showNewBriefModal = ref(false)
+const submittingBrief   = ref(false)
+const categories        = ref([])
+const newBrief = ref({ title: '', description: '', category_id: '', price: '', duration: '' })
+
+const loadCategories = async () => {
+  try {
+    const res = await axios.get('http://localhost:8000/api/freelancer/categories', { headers: store.authHeaders })
+    categories.value = res.data.filter(c => !c.parent_id)
+  } catch { categories.value = [] }
+}
+
+const submitBrief = async () => {
+  submittingBrief.value = true
+  try {
+    await axios.post('http://localhost:8000/api/freelancer/briefs', newBrief.value, { headers: store.authHeaders })
+    showNewBriefModal.value = false
+    newBrief.value = { title: '', description: '', category_id: '', price: '', duration: '' }
+    activeTab.value = 'briefs'
+    loadMyBriefs()
+  } catch (e) {
+    alert(e.response?.data?.message || 'Erreur lors de la publication')
+  } finally { submittingBrief.value = false }
+}
+
+// Listen for tab events from NavProfile
+const handleTabEvent = (e) => { activeTab.value = e.detail }
+
+watch(() => route.query.tab, (t) => { if (t) activeTab.value = t })
+watch(activeTab, (t) => { if (t === 'briefs') loadMyBriefs() })
 
 onMounted(() => {
   store.startPolling()
   loadMissions()
+  loadCategories()
+  window.addEventListener('freelancer-tab', handleTabEvent)
 })
+onUnmounted(() => window.removeEventListener('freelancer-tab', handleTabEvent))
 </script>
 
 <style scoped>
+@keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.animate-in { animation: slideIn 0.25s ease-out; }
 .zellige-pattern {
   background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l5 25h25l-20 15 8 20-18-12-18 12 8-20L0 25h25z' fill='%23006233' fill-opacity='0.03' fill-rule='evenodd'/%3E%3C/svg%3E");
 }
