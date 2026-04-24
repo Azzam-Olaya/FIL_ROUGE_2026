@@ -215,14 +215,27 @@ const sendContact = async () => {
   if (!contactMessage.value.trim()) return
   sending.value = true
   try {
-    await axios.post('http://localhost:8000/api/messages', {
-      receiver_id: props.brief.freelancer?.id,
-      content: contactMessage.value,
-    }, { headers: store.authHeaders })
-    showContactModal.value = false
-    contactMessage.value   = ''
-    window.dispatchEvent(new CustomEvent('client-tab', { detail: 'messages' }))
-  } catch {} finally { sending.value = false }
+    const receiverId = props.brief.freelancer?.id
+    if (receiverId) {
+      await axios.post('http://localhost:8000/api/messages', {
+        receiver_id: receiverId,
+        content: contactMessage.value,
+      }, { headers: store.authHeaders })
+    }
+  } catch {}
+  // Always close and navigate regardless of API result
+  showContactModal.value = false
+  contactMessage.value   = ''
+  window.dispatchEvent(new CustomEvent('client-tab', { detail: 'messages' }))
+  setTimeout(() => {
+    window.dispatchEvent(new CustomEvent('open-conversation', {
+      detail: {
+        userId: props.brief.freelancer?.id,
+        name:   props.brief.freelancer?.name || 'Freelancer',
+      }
+    }))
+  }, 150)
+  sending.value = false
 }
 </script>
 
