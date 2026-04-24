@@ -74,7 +74,7 @@
         <div v-if="activeTab === 'messages'">
           <h1 class="font-headline font-bold text-4xl text-on-surface mb-2">Messages</h1>
           <p class="text-on-surface-variant text-sm mb-6">Vos conversations avec les freelancers</p>
-          <MessagingPanel />
+          <MessagingPanel :autoOpen="pendingConversation" @opened="pendingConversation = null" />
         </div>
 
         <!-- ── Paiements ──────────────────────────────────────────────────── -->
@@ -288,7 +288,9 @@ const submitBrief = async () => {
 }
 
 // Listen for tab changes from navbar profile menu or BriefCard contact button
+const pendingConversation = ref(null)
 const handleTabEvent = (e) => { activeTab.value = e.detail }
+const handleOpenConv  = (e) => { pendingConversation.value = e.detail; activeTab.value = 'messages' }
 
 watch(() => route.query.tab, (t) => { if (t) activeTab.value = t })
 watch(activeTab, (t) => { if (t === 'briefs') loadMyMissions() })
@@ -298,8 +300,12 @@ onMounted(async () => {
   await loadBriefs()
   loadMyMissions()
   window.addEventListener('client-tab', handleTabEvent)
+  window.addEventListener('open-conversation', handleOpenConv)
 })
-onUnmounted(() => window.removeEventListener('client-tab', handleTabEvent))
+onUnmounted(() => {
+  window.removeEventListener('client-tab', handleTabEvent)
+  window.removeEventListener('open-conversation', handleOpenConv)
+})
 </script>
 
 <style scoped>
