@@ -37,6 +37,14 @@ export const useClientStore = defineStore('client', () => {
     }
   }
 
+  const fetchFavorites = async () => {
+    if (!authStore.user) return
+    try {
+      const res = await api.get('/client/favorites')
+      favoritedBriefs.value = res.data
+    } catch { }
+  }
+
   // ── Notifications ──────────────────────────────────────────────────────────
   const notifications = ref([])
   const unreadCount = computed(() => notifications.value.filter(n => !n.read).length)
@@ -47,6 +55,7 @@ export const useClientStore = defineStore('client', () => {
   const markRead = (id) => { const n = notifications.value.find(n => n.id === id); if (n) n.read = true }
 
   const fetchNotifications = async () => {
+    if (!authStore.user) return
     try {
       const res = await api.get('/client/notifications')
       notifications.value = res.data
@@ -71,7 +80,7 @@ export const useClientStore = defineStore('client', () => {
   return {
     user, userName, userInitials,
     likedIds, isLiked, toggleLike,
-    favoritedBriefs, favoritedIds, isFavorited, toggleFavorite,
+    favoritedBriefs, favoritedIds, isFavorited, toggleFavorite, fetchFavorites,
     notifications, unreadCount, markAllRead, markRead, fetchNotifications, startPolling,
   }
 })
