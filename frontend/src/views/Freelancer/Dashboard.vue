@@ -1,26 +1,30 @@
 <template>
   <div class="min-h-screen bg-surface font-body text-on-surface flex flex-col overflow-x-hidden">
-    <TopNavBar />
+    <TopNavBar @toggle-sidebar="sidebarOpen = !sidebarOpen" />
 
     <div class="flex flex-1 overflow-x-hidden">
-      <Sidebar :activeTab="activeTab" @change-tab="tab => activeTab = tab" />
+      <Sidebar 
+        :activeTab="activeTab" 
+        :isOpen="sidebarOpen"
+        @change-tab="tab => activeTab = tab" 
+        @close="sidebarOpen = false"
+      />
 
-      <main class="ml-64 p-8 min-h-screen flex-1 relative bg-surface zellige-pattern">
-
+      <main class="lg:ml-64 p-4 md:p-8 min-h-screen flex-1 relative bg-surface zellige-pattern transition-all duration-300">
         <!-- ── Dashboard ──────────────────────────────────────────────────── -->
         <div v-if="activeTab === 'dashboard'" class="space-y-8 pb-20">
 
-          <header class="flex justify-between items-start">
+          <header class="flex flex-col sm:flex-row justify-between items-start gap-4">
             <div class="flex-1">
-              <h1 class="font-headline font-bold text-5xl text-on-surface mb-2">
+              <h1 class="font-headline font-bold text-3xl md:text-5xl text-on-surface mb-2">
                 Marhba {{ store.userName }}
               </h1>
-              <p class="text-on-surface-variant font-medium text-lg italic">
+              <p class="text-on-surface-variant font-medium text-base md:text-lg italic">
                 Mettez en valeur votre talent et trouvez de nouvelles opportunités
               </p>
             </div>
             <button @click="showNewBriefModal = true"
-              class="flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-full font-bold text-sm hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/30 flex-shrink-0">
+              class="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary text-white px-6 py-3 rounded-full font-bold text-sm hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/30 flex-shrink-0">
               <span class="material-symbols-outlined text-sm">add</span>
               Nouveau brief
             </button>
@@ -28,9 +32,9 @@
 
           <!-- Mission feed -->
           <section>
-            <div class="flex items-baseline justify-between mb-6">
+            <div class="flex flex-col md:flex-row items-baseline justify-between mb-6 gap-2">
               <div>
-                <h2 class="font-headline text-3xl font-bold text-on-surface">Missions des clients</h2>
+                <h2 class="font-headline text-2xl md:text-3xl font-bold text-on-surface">Missions des clients</h2>
                 <p class="text-sm text-on-surface-variant mt-1">
                   {{ allMissions.length }} mission{{ allMissions.length !== 1 ? 's' : '' }} disponible{{ allMissions.length !== 1 ? 's' : '' }}
                 </p>
@@ -42,9 +46,9 @@
             </div>
 
             <div v-if="!loading && allMissions.length === 0"
-              class="bg-surface-container-low p-12 rounded-[2.5rem] text-center border border-primary/5">
-              <span class="material-symbols-outlined text-8xl text-on-surface-variant/30 mb-4" style="font-variation-settings: 'wght' 200">work_off</span>
-              <h3 class="font-headline text-2xl font-bold text-on-surface mb-2">Aucune mission disponible</h3>
+              class="bg-surface-container-low p-8 md:p-12 rounded-[2rem] md:rounded-[2.5rem] text-center border border-primary/5">
+              <span class="material-symbols-outlined text-6xl md:text-8xl text-on-surface-variant/30 mb-4" style="font-variation-settings: 'wght' 200">work_off</span>
+              <h3 class="font-headline text-xl md:text-2xl font-bold text-on-surface mb-2">Aucune mission disponible</h3>
             </div>
 
             <div v-else class="grid grid-cols-1 gap-6">
@@ -60,13 +64,13 @@
 
         <!-- ── Mes Briefs ─────────────────────────────────────────────────── -->
         <div v-if="activeTab === 'briefs'" class="space-y-6">
-          <div class="flex items-center justify-between">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h1 class="font-headline font-bold text-4xl text-on-surface mb-1">Mes Briefs</h1>
+              <h1 class="font-headline font-bold text-3xl md:text-4xl text-on-surface mb-1">Mes Briefs</h1>
               <p class="text-on-surface-variant text-sm">Briefs que vous avez publiés</p>
             </div>
             <button @click="showNewBriefModal = true"
-              class="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-full font-bold text-sm hover:scale-105 transition-all shadow-lg shadow-primary/20">
+              class="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary text-white px-5 py-2.5 rounded-full font-bold text-sm hover:scale-105 transition-all shadow-lg shadow-primary/20">
               <span class="material-symbols-outlined text-sm">add</span>Nouveau brief
             </button>
           </div>
@@ -79,14 +83,14 @@
             <button @click="showNewBriefModal = true" class="mt-4 text-primary text-sm font-bold hover:underline">Publier votre premier brief</button>
           </div>
           <div v-else class="grid grid-cols-1 gap-6">
-            <div v-for="b in myBriefs" :key="b.id" class="bg-white rounded-[2rem] border border-primary/5 p-6 shadow-sm">
-              <div class="flex items-start justify-between gap-4 mb-3">
-                <div>
+            <div v-for="b in myBriefs" :key="b.id" class="bg-white rounded-[2rem] border border-primary/5 p-4 md:p-6 shadow-sm">
+              <div class="flex flex-col sm:flex-row items-start justify-between gap-4 mb-3">
+                <div class="flex-1">
                   <span class="text-[10px] font-bold uppercase tracking-widest text-white bg-primary px-3 py-1 rounded-full">{{ b.category?.name || 'Sans catégorie' }}</span>
                   <h3 class="font-bold text-lg text-on-surface mt-2">{{ b.title }}</h3>
-                  <p class="text-sm text-on-surface-variant mt-1 line-clamp-2">{{ b.description }}</p>
+                  <p class="text-sm text-on-surface-variant mt-1 line-clamp-3">{{ b.description }}</p>
                 </div>
-                <div class="text-right flex-shrink-0">
+                <div class="sm:text-right flex-shrink-0">
                   <p class="font-black text-xl text-primary">{{ b.price }} DH</p>
                   <p class="text-xs text-on-surface-variant mt-0.5">{{ b.duration }}</p>
                 </div>
@@ -104,41 +108,41 @@
         </div>
 
         <!-- ── Messages ───────────────────────────────────────────────────── -->
-        <div v-if="activeTab === 'messages'" class="px-4">
-          <h1 class="font-headline font-bold text-4xl text-on-surface mb-2">Messages</h1>
+        <div v-if="activeTab === 'messages'" class="px-0 md:px-4">
+          <h1 class="font-headline font-bold text-3xl md:text-4xl text-on-surface mb-2">Messages</h1>
           <p class="text-on-surface-variant text-sm mb-6">Vos conversations avec les clients</p>
           <MessagingPanel />
         </div>
 
         <!-- ── Paiements ──────────────────────────────────────────────────── -->
-        <div v-if="activeTab === 'payments'" class="px-4">
-          <h1 class="font-headline font-bold text-4xl text-on-surface mb-2">Paiements</h1>
+        <div v-if="activeTab === 'payments'" class="px-0 md:px-4">
+          <h1 class="font-headline font-bold text-3xl md:text-4xl text-on-surface mb-2">Paiements</h1>
           <p class="text-on-surface-variant text-sm mb-6">Historique et gestion des paiements</p>
           <PaymentTab role="freelancer" />
         </div>
 
         <!-- ── Contrats ───────────────────────────────────────────────────── -->
-        <div v-if="activeTab === 'contracts'" class="px-4">
-          <h1 class="font-headline font-bold text-4xl text-on-surface mb-2">Contrats</h1>
+        <div v-if="activeTab === 'contracts'" class="px-0 md:px-4">
+          <h1 class="font-headline font-bold text-3xl md:text-4xl text-on-surface mb-2">Contrats</h1>
           <p class="text-on-surface-variant text-sm mb-6">Gestion de vos contrats</p>
           <ContractTab role="freelancer" />
         </div>
 
         <!-- ── Profil ─────────────────────────────────────────────────────── -->
-        <div v-if="activeTab === 'profile'" class="px-4 max-w-2xl">
-          <h1 class="font-headline font-bold text-4xl text-on-surface mb-2">Profil</h1>
+        <div v-if="activeTab === 'profile'" class="px-0 md:px-4 max-w-2xl">
+          <h1 class="font-headline font-bold text-3xl md:text-4xl text-on-surface mb-2">Profil</h1>
           <p class="text-on-surface-variant text-sm mb-6">Configuration de votre page talent</p>
-          <div class="bg-white rounded-[2rem] border border-primary/5 p-8 shadow-sm space-y-6">
+          <div class="bg-white rounded-[2rem] border border-primary/5 p-6 md:p-8 shadow-sm space-y-6">
             <div class="flex items-center gap-5">
-              <div class="w-20 h-20 rounded-full bg-primary flex items-center justify-center text-white font-bold text-2xl shadow-xl shadow-primary/20">
+              <div class="w-16 h-16 md:w-20 md:h-20 rounded-full bg-primary flex items-center justify-center text-white font-bold text-xl md:text-2xl shadow-xl shadow-primary/20">
                 {{ store.userInitials }}
               </div>
               <div>
-                <h2 class="font-bold text-2xl text-on-surface">{{ store.userName }}</h2>
+                <h2 class="font-bold text-xl md:text-2xl text-on-surface">{{ store.userName }}</h2>
                 <p class="text-on-surface-variant text-sm">Freelancer · MorLancer</p>
               </div>
             </div>
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div class="bg-surface-container rounded-2xl p-4">
                 <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Missions favorites</p>
                 <p class="font-black text-2xl text-primary">{{ store.favoritedMissions.length }}</p>
@@ -156,10 +160,10 @@
 
     <!-- Nouveau Brief Modal -->
     <Teleport to="body">
-      <div v-if="showNewBriefModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" @click.self="showNewBriefModal = false">
-        <div class="bg-white rounded-[2rem] shadow-2xl max-w-lg w-full p-8 animate-in">
+      <div v-if="showNewBriefModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-2 md:p-4" @click.self="showNewBriefModal = false">
+        <div class="bg-white rounded-[2rem] shadow-2xl max-w-lg w-full p-6 md:p-8 animate-in max-h-[90vh] overflow-y-auto">
           <div class="flex items-center justify-between mb-6">
-            <h2 class="font-headline text-2xl font-bold text-on-surface">Nouveau Brief</h2>
+            <h2 class="font-headline text-xl md:text-2xl font-bold text-on-surface">Nouveau Brief</h2>
             <button @click="showNewBriefModal = false" class="p-2 hover:bg-primary/10 rounded-full transition-colors">
               <span class="material-symbols-outlined">close</span>
             </button>
@@ -172,7 +176,7 @@
             </div>
             <div>
               <label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-1">Description *</label>
-              <textarea v-model="newBrief.description" required rows="6" placeholder="Décrivez vos compétences et ce que vous proposez..."
+              <textarea v-model="newBrief.description" required rows="4" md:rows="6" placeholder="Décrivez vos compétences et ce que vous proposez..."
                 class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary transition-colors resize-none" />
             </div>
             <div>
@@ -183,7 +187,7 @@
                 <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
               </select>
             </div>
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-1">Prix (DH) *</label>
                 <input v-model="newBrief.price" type="number" min="0" required placeholder="5000"
@@ -195,11 +199,11 @@
                   class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary transition-colors" />
               </div>
             </div>
-            <div class="flex gap-3 pt-2">
+            <div class="flex flex-col sm:flex-row gap-3 pt-2">
               <button type="button" @click="showNewBriefModal = false"
-                class="flex-1 px-4 py-2.5 rounded-full border border-primary text-primary font-bold text-sm hover:bg-primary/5 transition-colors">Annuler</button>
+                class="order-2 sm:order-1 px-4 py-2.5 rounded-full border border-primary text-primary font-bold text-sm hover:bg-primary/5 transition-colors">Annuler</button>
               <button type="submit" :disabled="submittingBrief"
-                class="flex-1 px-4 py-2.5 rounded-full bg-primary text-white font-bold text-sm disabled:opacity-50 hover:scale-105 transition-transform flex items-center justify-center gap-2">
+                class="order-1 sm:order-2 px-4 py-2.5 rounded-full bg-primary text-white font-bold text-sm disabled:opacity-50 hover:scale-105 transition-transform flex items-center justify-center gap-2">
                 <span v-if="submittingBrief" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                 <span v-else>Publier</span>
               </button>
@@ -221,11 +225,12 @@ import MessagingPanel from '@/components/Common/MessagingPanel.vue'
 import PaymentTab     from '@/components/Common/PaymentTab.vue'
 import ContractTab    from '@/components/Common/ContractTab.vue'
 import { useFreelancerStore } from '@/stores/freelancer'
-import axios from 'axios'
+import api from '@/api/axios'
 
-const store     = useFreelancerStore()
-const route     = useRoute()
-const activeTab = ref(route.query.tab || 'dashboard')
+const store        = useFreelancerStore()
+const route        = useRoute()
+const activeTab    = ref(route.query.tab || 'dashboard')
+const sidebarOpen  = ref(false)
 
 // ── Missions (publiées par les clients) ─────────────────────────────────────
 const allMissions = ref([])
@@ -234,7 +239,7 @@ const loading     = ref(false)
 const loadMissions = async () => {
   loading.value = true
   try {
-    const res = await axios.get('http://localhost:8000/api/freelancer/missions', { headers: store.authHeaders })
+    const res = await api.get('/freelancer/missions')
     if (res.data?.length > 0) allMissions.value = res.data
   } catch {
     allMissions.value = [
@@ -253,7 +258,7 @@ const loadingBriefs = ref(false)
 const loadMyBriefs = async () => {
   loadingBriefs.value = true
   try {
-    const res = await axios.get('http://localhost:8000/api/freelancer/briefs/mine', { headers: store.authHeaders })
+    const res = await api.get('/freelancer/briefs/mine')
     myBriefs.value = res.data
   } catch { myBriefs.value = [] } finally { loadingBriefs.value = false }
 }
@@ -266,7 +271,7 @@ const newBrief = ref({ title: '', description: '', category_id: '', price: '', d
 
 const loadCategories = async () => {
   try {
-    const res = await axios.get('http://localhost:8000/api/freelancer/categories', { headers: store.authHeaders })
+    const res = await api.get('/freelancer/categories')
     categories.value = res.data.filter(c => !c.parent_id)
   } catch { categories.value = [] }
 }
@@ -274,7 +279,7 @@ const loadCategories = async () => {
 const submitBrief = async () => {
   submittingBrief.value = true
   try {
-    await axios.post('http://localhost:8000/api/freelancer/briefs', newBrief.value, { headers: store.authHeaders })
+    await api.post('/freelancer/briefs', newBrief.value)
     showNewBriefModal.value = false
     newBrief.value = { title: '', description: '', category_id: '', price: '', duration: '' }
     activeTab.value = 'briefs'
