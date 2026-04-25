@@ -4,7 +4,11 @@ namespace App\Http\Controllers\Api\Client;
 
 use App\Http\Controllers\Controller;
 use App\Models\PortfolioFavorite;
+use App\Models\Portfolio;
+use App\Models\PortfolioLike;
+use App\Models\PortfolioComment;
 use App\Models\MissionFavorite;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -51,11 +55,36 @@ class ClientController extends Controller
         $this->ensureTablesExist();
         try {
             return response()->json(
-                $request->user()->missions()->with(['category', 'categories'])->get()
+                $request->user()->missions()
+                    ->with(['category', 'categories', 'likes.user'])
+                    ->withCount(['likes', 'comments'])
+                    ->latest()
+                    ->get()
             );
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
+    }
+
+    public function getMissionComments($id)
+    {
+        return response()->json(
+            \App\Models\MissionComment::where('mission_id', $id)
+                ->with('user.role')
+                ->latest()
+                ->get()
+        );
+    }
+
+    public function getMissionLikes($id)
+    {
+        return response()->json(
+            \App\Models\MissionLike::where('mission_id', $id)
+                ->with('user.role')
+                ->latest()
+                ->get()
+                ->pluck('user')
+        );
     }
 
     public function getNotifications(Request $request)
@@ -126,20 +155,44 @@ class ClientController extends Controller
 
     public function toggleLike(Request $request, $id)
     {
-        $existing = \App\Models\PortfolioLike::where(['portfolio_id' => $id, 'user_id' => $request->user()->id])->first();
-        if ($existing) { $existing->delete(); return response()->json(['liked' => false]); }
-        \App\Models\PortfolioLike::create(['portfolio_id' => $id, 'user_id' => $request->user()->id]);
+        $portfolio = Portfolio::findOrFail($id);
+        $existing = PortfolioLike::where(['portfolio_id' => $id, 'user_id' => $request->user()->id])->first();
+        if ($existing) {
+            $existing->delete();
+            return response()->json(['liked' => false]);
+        }
+        PortfolioLike::create(['portfolio_id' => $id, 'user_id' => $request->user()->id]);
+
+        // Notify Freelancer
+        Notification::create([
+            'user_id' => $portfolio->freelancer_id,
+            'type'    => 'like',
+            'title'   => '❤️ Nouveau like sur votre brief',
+            'message' => $request->user()->name . ' a aimé votre brief "' . $portfolio->title . '"',
+            'portfolio_id' => $id // Use mission_id if we want to reuse the column or add one
+        ]);
+
         return response()->json(['liked' => true]);
     }
 
     public function addComment(Request $request, $id)
     {
         $request->validate(['body' => 'required|string|max:500']);
-        $comment = \App\Models\PortfolioComment::create([
+        $portfolio = Portfolio::findOrFail($id);
+        $comment = PortfolioComment::create([
             'portfolio_id' => $id,
             'user_id'      => $request->user()->id,
             'body'         => $request->body,
         ]);
+
+        // Notify Freelancer
+        Notification::create([
+            'user_id' => $portfolio->freelancer_id,
+            'type'    => 'comment',
+            'title'   => '💬 Nouveau commentaire sur votre brief',
+            'message' => $request->user()->name . ' : "' . \Str::limit($request->body, 60) . '" sur "' . $portfolio->title . '"',
+        ]);
+
         return response()->json($comment->load('user'), 201);
     }
 
@@ -171,31 +224,17 @@ class ClientController extends Controller
     public function getStats(Request $request)
     {
         $user = $request->user();
-        $now  = Carbon::now();
 
-        $totalMissions     = \App\Models\Mission::where('client_id', $user->id)->count();
-        $missionsThisMonth = \App\Models\Mission::where('client_id', $user->id)->whereMonth('created_at', $now->month)->whereYear('created_at', $now->year)->count();
-        $missionsLastMonth = \App\Models\Mission::where('client_id', $user->id)->whereMonth('created_at', $now->copy()->subMonth()->month)->count();
-        $missionsTrend     = $missionsLastMonth > 0 ? round((($missionsThisMonth - $missionsLastMonth) / $missionsLastMonth) * 100) : ($missionsThisMonth > 0 ? 100 : 0);
-
-        $totalContracts     = \App\Models\Contract::where('client_id', $user->id)->count();
-        $contractsThisMonth = \App\Models\Contract::where('client_id', $user->id)->whereMonth('created_at', $now->month)->whereYear('created_at', $now->year)->count();
-        $contractsLastMonth = \App\Models\Contract::where('client_id', $user->id)->whereMonth('created_at', $now->copy()->subMonth()->month)->count();
-        $contractsTrend     = $contractsLastMonth > 0 ? round((($contractsThisMonth - $contractsLastMonth) / $contractsLastMonth) * 100) : ($contractsThisMonth > 0 ? 100 : 0);
-
-        $totalSpent     = \App\Models\Contract::where('client_id', $user->id)->where('status', 'completed')->sum('amount');
-        $spentThisMonth = \App\Models\Contract::where('client_id', $user->id)->where('status', 'completed')->whereMonth('updated_at', $now->month)->whereYear('updated_at', $now->year)->sum('amount');
-        $spentLastMonth = \App\Models\Contract::where('client_id', $user->id)->where('status', 'completed')->whereMonth('updated_at', $now->copy()->subMonth()->month)->sum('amount');
-        $spentTrend     = $spentLastMonth > 0 ? round((($spentThisMonth - $spentLastMonth) / $spentLastMonth) * 100) : ($spentThisMonth > 0 ? 100 : 0);
+        $totalMissions = \App\Models\Mission::where('client_id', $user->id)->count();
+        $totalContracts = \App\Models\Contract::where('client_id', $user->id)->count();
+        $totalSpent = \App\Models\Contract::where('client_id', $user->id)->where('status', 'completed')->sum('amount');
+        $openMissions = \App\Models\Mission::where('client_id', $user->id)->where('status', 'open')->count();
 
         return response()->json([
             'total_missions'  => $totalMissions,
-            'missions_trend'  => $missionsTrend,
             'total_contracts' => $totalContracts,
-            'contracts_trend' => $contractsTrend,
             'total_spent'     => round($totalSpent, 2),
-            'spent_trend'     => $spentTrend,
-            'open_missions'   => \App\Models\Mission::where('client_id', $user->id)->where('status', 'open')->count(),
+            'open_missions'   => $openMissions,
             'balance'         => $user->balance,
         ]);
     }
