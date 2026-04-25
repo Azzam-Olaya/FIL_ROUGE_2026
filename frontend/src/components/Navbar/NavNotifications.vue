@@ -24,10 +24,10 @@
             <span class="material-symbols-outlined text-2xl text-primary/30 animate-spin block">progress_activity</span>
           </div>
           <template v-else-if="store.notifications.length > 0">
-            <div v-for="notif in store.notifications" :key="notif.id"
+            <button v-for="notif in store.notifications" :key="notif.id"
               @click="handleClick(notif)"
               :class="!notif.read ? 'bg-primary/5 border-l-4 border-primary' : 'bg-white'"
-              class="flex gap-3 px-4 py-3 hover:bg-primary/10 transition-colors cursor-pointer">
+              class="w-full text-left flex gap-3 px-4 py-3 hover:bg-primary/10 transition-colors cursor-pointer">
               <div class="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center" :class="iconBg(notif.type)">
                 <span class="material-symbols-outlined text-sm text-white" style="font-variation-settings: 'FILL' 1">{{ iconName(notif.type) }}</span>
               </div>
@@ -37,7 +37,7 @@
                 <p class="text-[10px] text-on-surface-variant/50 mt-1">{{ timeAgo(notif.created_at) }}</p>
               </div>
               <div v-if="!notif.read" class="w-2 h-2 bg-secondary rounded-full flex-shrink-0 mt-1.5"></div>
-            </div>
+            </button>
           </template>
           <div v-else class="text-center py-8">
             <span class="material-symbols-outlined text-3xl text-on-surface-variant/30 block mb-2">notifications_off</span>
@@ -68,7 +68,11 @@ const toggle = async () => {
 const handleClick = (notif) => {
   store.markRead(notif.id)
   open.value = false
-  if (notif.type === 'message') router.push({ path: '/freelancer/dashboard', query: { tab: 'messages' } })
+  if (notif.type === 'message') {
+    router.push({ path: '/freelancer/dashboard', query: { tab: 'messages' } })
+  } else if (notif.type === 'like' || notif.type === 'comment') {
+    router.push({ path: '/freelancer/dashboard', query: { tab: 'briefs', briefId: notif.portfolio_id } })
+  }
 }
 
 const timeAgo = (date) => {
