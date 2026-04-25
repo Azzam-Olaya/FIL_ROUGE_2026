@@ -105,12 +105,41 @@
                 </div>
               </div>
               <div class="flex items-center gap-4 text-xs text-on-surface-variant pt-3 border-t border-primary/5">
-                <span class="flex items-center gap-1">
+                <button @click="toggleLikes(b)" class="flex items-center gap-1.5 hover:text-primary transition-colors">
                   <span class="material-symbols-outlined text-sm">favorite</span>{{ b.likes_count || 0 }} j'aime
-                </span>
-                <span class="flex items-center gap-1">
+                </button>
+                <button @click="toggleComments(b)" class="flex items-center gap-1.5 hover:text-primary transition-colors">
                   <span class="material-symbols-outlined text-sm">chat_bubble</span>{{ b.comments_count || 0 }} commentaires
-                </span>
+                </button>
+              </div>
+
+              <!-- Likes List -->
+              <div v-if="b.showLikes" class="mt-4 pt-4 border-t border-primary/5">
+                <div v-if="b.likes?.length" class="flex flex-wrap gap-2">
+                  <div v-for="like in b.likes" :key="like.id" class="flex items-center gap-1.5 bg-primary/5 px-2.5 py-1 rounded-full">
+                    <div class="w-5 h-5 rounded-full bg-primary flex items-center justify-center text-white text-[8px] font-bold">
+                      {{ (like.user?.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0,1) }}
+                    </div>
+                    <span class="text-[10px] font-medium text-on-surface">{{ like.user?.name || 'Client' }}</span>
+                  </div>
+                </div>
+                <p v-else class="text-center text-xs text-on-surface-variant py-2">Aucun j'aime pour le moment</p>
+              </div>
+
+              <!-- Comments List -->
+              <div v-if="b.showComments" class="mt-4 pt-4 border-t border-primary/5 space-y-4">
+                <div v-if="b.commentsList?.length" class="space-y-4">
+                  <div v-for="c in b.commentsList" :key="c.id" class="flex gap-3 items-start animate-in">
+                    <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold text-[10px] flex-shrink-0">
+                      {{ (c.user?.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) }}
+                    </div>
+                    <div class="flex-1 bg-surface-container rounded-2xl px-4 py-3">
+                      <p class="font-bold text-xs text-on-surface">{{ c.user?.name || 'Anonyme' }}</p>
+                      <p class="text-sm text-on-surface-variant mt-0.5 leading-relaxed">{{ c.body }}</p>
+                    </div>
+                  </div>
+                </div>
+                <p v-else class="text-center text-xs text-on-surface-variant py-2">Aucun commentaire pour le moment</p>
               </div>
             </div>
           </div>
@@ -297,6 +326,20 @@ const loadMyBriefs = async () => {
   } catch { myBriefs.value = [] } finally { loadingBriefs.value = false }
 }
 
+const toggleComments = async (brief) => {
+  brief.showComments = !brief.showComments
+  if (brief.showComments && !brief.commentsList) {
+    try {
+      const res = await api.get(`/freelancer/briefs/${brief.id}/comments`)
+      brief.commentsList = res.data
+    } catch {}
+  }
+}
+
+const toggleLikes = (brief) => {
+  brief.showLikes = !brief.showLikes
+}
+
 // ── Nouveau Brief Modal ─────────────────────────────────────────────────────
 const showNewBriefModal = ref(false)
 const submittingBrief   = ref(false)
@@ -376,6 +419,7 @@ watch(() => route.query.briefId, (id) => {
 
 onMounted(() => {
   store.startPolling()
+  store.fetchFavorites()
   loadMissions()
   loadCategories()
   window.addEventListener('freelancer-tab', handleTabEvent)
