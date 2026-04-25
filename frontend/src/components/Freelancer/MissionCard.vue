@@ -13,8 +13,12 @@
             <span class="text-[10px] font-bold text-white bg-primary px-2.5 py-0.5 rounded-full">
               {{ mission.category?.name || mission.categories?.[0] || 'Sans catégorie' }}
             </span>
-            <span v-if="mission.deadline" class="text-[10px] text-on-surface-variant flex items-center gap-1">
-              <span class="material-symbols-outlined text-[11px]">schedule</span>{{ mission.deadline }}
+            <span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant bg-surface-container px-3 py-1 rounded-full flex items-center gap-1">
+              <span class="material-symbols-outlined text-xs" style="font-size: 14px">schedule</span>
+              {{ new Date(mission.createdAt || mission.created_at).toLocaleDateString('fr-FR') }}
+            </span>
+            <span v-if="mission.deadline" class="text-[10px] text-on-surface-variant flex items-center gap-1 border-l border-primary/10 pl-2">
+              <span class="material-symbols-outlined text-[11px]">event</span>{{ mission.deadline }}
             </span>
           </div>
         </div>
@@ -37,10 +41,13 @@
       </button>
     </div>
 
-    <!-- Categories pills -->
+    <!-- Categories pills (Languages/Skills) -->
     <div v-if="mission.categories?.length" class="px-6 pb-3 flex flex-wrap gap-2">
       <span v-for="(cat, i) in mission.categories" :key="i"
-        class="text-[10px] font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full">{{ cat }}</span>
+        class="text-[10px] font-bold text-secondary bg-secondary/10 px-3 py-1.5 rounded-lg flex items-center gap-1">
+        <span class="material-symbols-outlined" style="font-size: 12px">terminal</span>
+        {{ cat }}
+      </span>
     </div>
 
     <!-- Counters bar -->
@@ -156,7 +163,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useFreelancerStore } from '@/stores/freelancer'
-import axios from 'axios'
+import api from '@/api/axios'
 
 const props = defineProps({ mission: { type: Object, required: true } })
 const emit  = defineEmits(['mission-updated'])
@@ -174,7 +181,7 @@ const initials = (n) => n?.split(' ').map(x => x[0]).join('').toUpperCase().slic
 
 const toggleLike = async () => {
   store.toggleLike(props.mission)
-  try { await axios.post(`http://localhost:8000/api/freelancer/missions/${props.mission.id}/like`, {}, { headers: store.authHeaders }) } catch {}
+  try { await api.post(`/freelancer/missions/${props.mission.id}/like`) } catch {}
 }
 
 const toggleFavorite = async () => {
@@ -182,7 +189,7 @@ const toggleFavorite = async () => {
   store.toggleFavorite(props.mission)
   const field = 'favorites_count' in props.mission ? 'favorites_count' : 'favorites'
   props.mission[field] = Math.max(0, (props.mission[field] || 0) + (was ? -1 : 1))
-  try { await axios.post(`http://localhost:8000/api/freelancer/missions/${props.mission.id}/favorite`, {}, { headers: store.authHeaders }) } catch {}
+  try { await api.post(`/freelancer/missions/${props.mission.id}/favorite`) } catch {}
 }
 
 const toggleComments = () => { showComments.value = !showComments.value }
@@ -193,17 +200,17 @@ const addComment = async () => {
   newComment.value = ''
   commentsList.value.push({ author: store.userName, text })
   props.mission.comments = (props.mission.comments || 0) + 1
-  try { await axios.post(`http://localhost:8000/api/freelancer/missions/${props.mission.id}/comment`, { text }, { headers: store.authHeaders }) } catch {}
+  try { await api.post(`/freelancer/missions/${props.mission.id}/comment`, { body: text }) } catch {}
 }
 
 const sendContact = async () => {
   if (!contactMessage.value.trim()) return
   sending.value = true
   try {
-    await axios.post('http://localhost:8000/api/messages', {
-      receiver_id: props.mission.client?.id,
+    await api.post('/messages', {
+      receiver_id: props.mission.clientId,
       content: contactMessage.value,
-    }, { headers: store.authHeaders })
+    })
     showContactModal.value = false
     contactMessage.value   = ''
     window.dispatchEvent(new CustomEvent('freelancer-tab', { detail: 'messages' }))
