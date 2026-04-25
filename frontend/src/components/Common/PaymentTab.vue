@@ -23,50 +23,56 @@
       <p class="text-on-surface-variant font-medium">Aucun paiement enregistré</p>
     </div>
     <div v-else class="bg-white rounded-2xl border border-primary/5 shadow-sm overflow-hidden">
-      <table class="w-full text-sm">
-        <thead>
-          <tr class="border-b border-primary/5 bg-surface-container/40">
-            <th class="text-left px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Mission</th>
-            <th class="text-left px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{{ role === 'freelancer' ? 'Client' : 'Freelancer' }}</th>
-            <th class="text-left px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Montant</th>
-            <th class="text-left px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Statut</th>
-            <th class="text-left px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Date</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-primary/5">
-          <tr v-for="p in payments" :key="p.id" class="hover:bg-surface-container/20 transition-colors">
-            <td class="px-6 py-4 font-semibold text-on-surface">{{ p.mission?.title || '—' }}</td>
-            <td class="px-6 py-4 text-on-surface-variant">{{ role === 'freelancer' ? p.mission?.client?.name : p.freelancer?.name || '—' }}</td>
-            <td class="px-6 py-4 font-black text-primary">{{ Number(p.amount).toLocaleString('fr-FR') }} MAD</td>
-            <td class="px-6 py-4"><span :class="statusClass(p.status)" class="text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">{{ statusLabel(p.status) }}</span></td>
-            <td class="px-6 py-4 text-on-surface-variant text-xs">{{ formatDate(p.created_at) }}</td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-primary/5 bg-surface-container/40">
+              <th class="text-left px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant whitespace-nowrap">Mission</th>
+              <th class="text-left px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant whitespace-nowrap">{{ role === 'freelancer' ? 'Client' : 'Freelancer' }}</th>
+              <th class="text-left px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant whitespace-nowrap">Montant</th>
+              <th class="text-left px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant whitespace-nowrap">Statut</th>
+              <th class="text-left px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant whitespace-nowrap">Date</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-primary/5">
+            <tr v-for="p in payments" :key="p.id" class="hover:bg-surface-container/20 transition-colors">
+              <td class="px-6 py-4 font-semibold text-on-surface whitespace-nowrap">{{ p.mission?.title || '—' }}</td>
+              <td class="px-6 py-4 text-on-surface-variant whitespace-nowrap">{{ role === 'freelancer' ? p.mission?.client?.name : p.freelancer?.name || '—' }}</td>
+              <td class="px-6 py-4 font-black text-primary whitespace-nowrap">{{ Number(p.amount).toLocaleString('fr-FR') }} MAD</td>
+              <td class="px-6 py-4 whitespace-nowrap"><span :class="statusClass(p.status)" class="text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">{{ statusLabel(p.status) }}</span></td>
+              <td class="px-6 py-4 text-on-surface-variant text-xs whitespace-nowrap">{{ formatDate(p.created_at) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import axios from 'axios'
+import api from '@/api/axios'
 
 const props    = defineProps({ role: { type: String, default: 'freelancer' } })
 const payments = ref([])
 const loading  = ref(false)
-const headers  = computed(() => ({ Authorization: `Bearer ${localStorage.getItem('token')}` }))
 
 const totalAmount    = computed(() => payments.value.reduce((s, p) => s + Number(p.amount || 0), 0))
 const completedCount = computed(() => payments.value.filter(p => p.status === 'completed').length)
-const endpoint       = computed(() => props.role === 'freelancer' ? 'http://localhost:8000/api/freelancer/payments' : 'http://localhost:8000/api/client/payments')
+const endpoint       = computed(() => props.role === 'freelancer' ? '/freelancer/payments' : '/client/payments')
 
 const load = async () => {
   loading.value = true
-  try { const res = await axios.get(endpoint.value, { headers: headers.value }); payments.value = res.data }
-  catch { payments.value = props.role === 'freelancer'
-    ? [{ id: 1, mission: { title: 'Rénovation Salon Riadh', client: { name: 'Mehdi El Fassi' } }, amount: 8500, status: 'completed', created_at: new Date().toISOString() }]
-    : [{ id: 1, mission: { title: 'Rénovation Salon Riadh' }, freelancer: { name: 'Yasmine B.' }, amount: 8500, status: 'completed', created_at: new Date().toISOString() }]
-  } finally { loading.value = false }
+  try {
+    const res = await api.get(endpoint.value)
+    payments.value = res.data
+  } catch {
+    payments.value = props.role === 'freelancer'
+      ? [{ id: 1, mission: { title: 'Rénovation Salon Riadh', client: { name: 'Mehdi El Fassi' } }, amount: 8500, status: 'completed', created_at: new Date().toISOString() }]
+      : [{ id: 1, mission: { title: 'Rénovation Salon Riadh' }, freelancer: { name: 'Yasmine B.' }, amount: 8500, status: 'completed', created_at: new Date().toISOString() }]
+  } finally {
+    loading.value = false
+  }
 }
 
 const statusClass = (s) => ({ completed: 'bg-green-100 text-green-700', pending: 'bg-yellow-100 text-yellow-700', active: 'bg-primary/10 text-primary' }[s] || 'bg-surface-container text-on-surface-variant')
