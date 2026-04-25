@@ -17,7 +17,7 @@ class FreelancerController extends Controller
     public function getAvailableMissions(Request $request)
     {
         $query = \App\Models\Mission::where('status', 'open')
-            ->with(['client', 'category', 'likes', 'comments.user']);
+            ->with(['client', 'category', 'categories', 'likes', 'comments.user']);
 
         if ($request->search) {
             $query->where(function($q) use ($request) {
@@ -44,6 +44,7 @@ class FreelancerController extends Controller
             'budget'      => $m->budget,
             'deadline'    => $m->deadline,
             'category'    => $m->category?->name,
+            'categories'  => $m->categories->pluck('name'),
             'clientName'  => $m->client?->name,
             'clientId'    => $m->client_id,
             'likes'       => $m->likes->count(),
@@ -333,6 +334,7 @@ class FreelancerController extends Controller
     // Notifications (likes + comments sur mes briefs)
     public function getNotifications(Request $request)
     {
+        $this->ensureTablesExist();
         $userId = $request->user()->id;
         $myBriefIds = Portfolio::where('freelancer_id', $userId)->pluck('id');
 
@@ -351,5 +353,23 @@ class FreelancerController extends Controller
         return response()->json(
             $likes->concat($comments)->sortByDesc('at')->values()
         );
+    }
+
+    private function ensureTablesExist()
+    {
+        try {
+            if (!\Illuminate\Support\Facades\Schema::hasTable('mission_category')) {
+                \Illuminate\Support\Facades\DB::statement('CREATE TABLE mission_category (mission_id BIGINT NOT NULL REFERENCES missions(id) ON DELETE CASCADE, category_id BIGINT NOT NULL REFERENCES categories(id) ON DELETE CASCADE, PRIMARY KEY (mission_id, category_id))');
+            }
+            if (!\Illuminate\Support\Facades\Schema::hasTable('mission_comments')) {
+                \Illuminate\Support\Facades\DB::statement("CREATE TABLE mission_comments (id SERIAL PRIMARY KEY, mission_id BIGINT NOT NULL REFERENCES missions(id) ON DELETE CASCADE, user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE, body TEXT NOT NULL, created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL)");
+            }
+            if (!\Illuminate\Support\Facades\Schema::hasColumn('portfolios', 'price')) {
+                \Illuminate\Support\Facades\DB::statement('ALTER TABLE portfolios ADD COLUMN price DECIMAL(10,2) NULL');
+            }
+            if (!\Illuminate\Support\Facades\Schema::hasColumn('portfolios', 'duration')) {
+                \Illuminate\Support\Facades\DB::statement('ALTER TABLE portfolios ADD COLUMN duration VARCHAR(100) NULL');
+            }
+        } catch (\Exception $e) {}
     }
 }
