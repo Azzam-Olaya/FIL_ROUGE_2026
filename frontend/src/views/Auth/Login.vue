@@ -122,9 +122,11 @@
 <script setup>
 import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import axios from 'axios';
+import api from '../../api/axios';
+import { useAuthStore } from '../../stores/auth';
 
 const router = useRouter();
+const authStore = useAuthStore();
 const loading = ref(false);
 const form = reactive({
   email: '',
@@ -134,15 +136,13 @@ const form = reactive({
 const handleLogin = async () => {
   loading.value = true;
   try {
-    // Appel API vers Laravel (Backend tournant sur le port 8000)
-    const res = await axios.post('http://localhost:8000/api/login', form);
+    const res = await api.post('/login', form);
     
-    // Stockage du jeton et des infos utilisateur dans le navigateur
-    localStorage.setItem('token', res.data.access_token);
-    localStorage.setItem('user', JSON.stringify(res.data.user));
+    // Use the auth store to save user and token
+    authStore.setAuth(res.data.user, res.data.access_token);
     
-    // Redirection selon le rôle de l'utilisateur
-    const roleName = res.data.user.role_name;
+    // Redirection according to role
+    const roleName = authStore.userRole;
     if (roleName === 'admin') {
       router.push('/admin/dashboard');
     } else if (roleName === 'client') {
@@ -151,7 +151,6 @@ const handleLogin = async () => {
       router.push('/freelancer/dashboard');
     }
   } catch (err) {
-    // Affichage de l'erreur envoyée par le backend
     alert(err.response?.data?.message || 'Identifiants invalides');
   } finally {
     loading.value = false;
