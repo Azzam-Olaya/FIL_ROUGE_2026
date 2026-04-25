@@ -239,8 +239,11 @@ const loading     = ref(false)
 const loadMissions = async () => {
   loading.value = true
   try {
-    const res = await api.get('/freelancer/missions')
-    if (res.data?.length > 0) allMissions.value = res.data
+    const params = {}
+    if (store.searchQuery)    params.search = store.searchQuery
+    if (store.searchCategory) params.category_id = store.searchCategory
+    const res = await api.get('/freelancer/missions', { params })
+    if (res.data) allMissions.value = res.data
   } catch {
     allMissions.value = [
       { id: 101, title: 'Design Logo Artisanat Moderne', description: 'Nous cherchons un designer pour concevoir un logo alliant les zelliges traditionnels et une typographie moderne pour notre nouvelle marque de vêtements.', budget: 2500, deadline: '10 Jours', categories: ['Design', 'Branding'], categorySlug: 'design', client: { id: 1, name: 'Boutique Atlas' }, likes: 12, comments: 3, favorites_count: 2, commentsList: [] },
@@ -250,6 +253,13 @@ const loadMissions = async () => {
     ]
   } finally { loading.value = false }
 }
+
+let debounceTimer = null
+watch(() => store.searchQuery, () => {
+  clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(loadMissions, 400)
+})
+watch(() => store.searchCategory, () => loadMissions())
 
 // ── Mes Briefs (publiés par le freelancer) ──────────────────────────────────
 const myBriefs    = ref([])
