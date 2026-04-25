@@ -124,7 +124,7 @@ class FreelancerController extends Controller
     public function getBriefs()
     {
         return response()->json(
-            Portfolio::with(['freelancer', 'category', 'comments.user'])
+            Portfolio::with(['freelancer', 'categories', 'comments.user'])
                 ->latest()->get()
         );
     }
@@ -132,7 +132,7 @@ class FreelancerController extends Controller
     public function getMyBriefs(Request $request)
     {
         return response()->json(
-            $request->user()->portfolios()->with('category')->latest()->get()
+            $request->user()->portfolios()->with('categories')->latest()->get()
         );
     }
 
@@ -142,6 +142,8 @@ class FreelancerController extends Controller
             'title'       => 'required|string|max:255',
             'description' => 'required|string',
             'category_id' => 'required|exists:categories,id',
+            'category_ids' => 'nullable|array',
+            'category_ids.*' => 'exists:categories,id',
             'images'      => 'nullable|array',
             'images.*'    => 'file|mimes:jpg,jpeg,png,webp|max:4096',
         ]);
@@ -158,10 +160,16 @@ class FreelancerController extends Controller
             'category_id'   => $request->category_id,
             'title'         => $request->title,
             'description'   => $request->description,
+            'price'         => $request->price,
+            'duration'      => $request->duration,
             'images'        => $paths,
         ]);
 
-        return response()->json($brief->load('category', 'freelancer'), 201);
+        if ($request->category_ids) {
+            $brief->categories()->sync($request->category_ids);
+        }
+
+        return response()->json($brief->load('categories', 'freelancer'), 201);
     }
 
     // Likes
@@ -342,16 +350,32 @@ class FreelancerController extends Controller
             ->where('user_id', '!=', $userId)
             ->with(['user', 'portfolio'])
             ->latest()->take(10)->get()
-            ->map(fn($l) => ['type' => 'like', 'user' => $l->user->name, 'brief' => $l->portfolio->title, 'at' => $l->created_at]);
+            ->map(fn($l) => [
+                'id'           => 'like_' . $l->id,
+                'portfolio_id' => $l->portfolio_id,
+                'type'         => 'like',
+                'title'        => '❤️ Nouveau like',
+                'message'      => $l->user->name . ' a aimé votre brief "' . $l->portfolio->title . '"',
+                'created_at'   => $l->created_at,
+                'read'         => false
+            ]);
 
         $comments = PortfolioComment::whereIn('portfolio_id', $myBriefIds)
             ->where('user_id', '!=', $userId)
             ->with(['user', 'portfolio'])
             ->latest()->take(10)->get()
-            ->map(fn($c) => ['type' => 'comment', 'user' => $c->user->name, 'brief' => $c->portfolio->title, 'body' => $c->body, 'at' => $c->created_at]);
+            ->map(fn($c) => [
+                'id'           => 'comment_' . $c->id,
+                'portfolio_id' => $c->portfolio_id,
+                'type'         => 'comment',
+                'title'        => '💬 Nouveau commentaire',
+                'message'      => $c->user->name . ' : "' . \Str::limit($c->body, 50) . '" sur "' . $c->portfolio->title . '"',
+                'created_at'   => $c->created_at,
+                'read'         => false
+            ]);
 
         return response()->json(
-            $likes->concat($comments)->sortByDesc('at')->values()
+            $likes->concat($comments)->sortByDesc('created_at')->values()
         );
     }
 
