@@ -109,14 +109,10 @@
 
 <script setup>
 import { ref, nextTick, onMounted, onUnmounted } from 'vue'
-import axios from 'axios'
+import api from '@/api/axios'
 
 const props = defineProps({ autoOpen: { type: Object, default: null } })
 const emit  = defineEmits(['opened'])
-
-const BASE = 'http://localhost:8000/api'
-const h    = () => ({ Authorization: `Bearer ${localStorage.getItem('token')}` })
-const me   = () => JSON.parse(localStorage.getItem('user') || '{}')?.id
 
 const conversations = ref([])
 const messages      = ref([])
@@ -134,7 +130,7 @@ let pollingTimer = null, searchTimer = null
 const loadConversations = async () => {
   loadingConvs.value = true
   try {
-    const res = await axios.get(`${BASE}/conversations`, { headers: h() })
+    const res = await api.get('/conversations')
     conversations.value = res.data
   } catch { conversations.value = [] }
   finally { loadingConvs.value = false }
@@ -148,11 +144,9 @@ const openConversation = async (conv) => {
   loadingMsgs.value   = true
   messages.value      = []
   try {
-    const res = await axios.get(`${BASE}/conversations/${conv.user_id}`, { headers: h() })
-    // Ensure we have an array
+    const res = await api.get(`/conversations/${conv.user_id}`)
     messages.value = Array.isArray(res.data) ? res.data : []
     await scrollBottom()
-    // Mark conversation as read in list
     const c = conversations.value.find(c => c.user_id === conv.user_id)
     if (c) c.unread = false
   } catch (e) {
@@ -171,9 +165,8 @@ const startConversation = async (user) => {
   } else {
     selectedUser.value = { user_id: user.id, name: user.name, role: user.role?.name }
     messages.value = []
-    // Try to load existing messages
     try {
-      const res = await axios.get(`${BASE}/conversations/${user.id}`, { headers: h() })
+      const res = await api.get(`/conversations/${user.id}`)
       messages.value = res.data
       await scrollBottom()
     } catch {}
@@ -187,7 +180,6 @@ const sendMessage = async () => {
   newMessage.value = ''
   sending.value    = true
 
-  // Optimistic message
   const tempId = `tmp_${Date.now()}`
   messages.value.push({
     id: tempId, sender: 'me', text,
@@ -196,22 +188,19 @@ const sendMessage = async () => {
   await scrollBottom()
 
   try {
-    await axios.post(`${BASE}/messages`, {
+    await api.post('/messages', {
       receiver_id: selectedUser.value.user_id,
       content: text
-    }, { headers: h() })
+    })
 
-    // Reload real messages from server
-    const res = await axios.get(`${BASE}/conversations/${selectedUser.value.user_id}`, { headers: h() })
+    const res = await api.get(`/conversations/${selectedUser.value.user_id}`)
     messages.value = Array.isArray(res.data) ? res.data : messages.value
     await scrollBottom()
 
-    // Refresh conversation list
-    const convRes = await axios.get(`${BASE}/conversations`, { headers: h() })
+    const convRes = await api.get('/conversations')
     conversations.value = convRes.data
   } catch (e) {
     console.error('sendMessage error:', e?.response?.data || e)
-    // Remove temp message on error
     messages.value = messages.value.filter(m => m.id !== tempId)
   } finally { sending.value = false }
 }
@@ -222,26 +211,23 @@ const onSearch = () => {
   if (searchQuery.value.trim().length < 2) { searchResults.value = []; return }
   searchTimer = setTimeout(async () => {
     try {
-      const res = await axios.get(`${BASE}/users/search?q=${encodeURIComponent(searchQuery.value)}`, { headers: h() })
+      const res = await api.get(`/users/search?q=${encodeURIComponent(searchQuery.value)}`)
       searchResults.value = res.data
     } catch { searchResults.value = [] }
   }, 300)
 }
 
-// ── Polling: check for new messages every 3s ───────────────────────────────
+// ── Polling: check for new messages ───────────────────────────────────────
 const poll = async () => {
-  // Refresh conversation list for all users
   try {
-    const res = await axios.get(`${BASE}/conversations`, { headers: h() })
+    const res = await api.get('/conversations')
     conversations.value = res.data
   } catch {}
 
-  // Refresh messages in open conversation
   if (selectedUser.value) {
     try {
-      const res = await axios.get(`${BASE}/conversations/${selectedUser.value.user_id}`, { headers: h() })
+      const res = await api.get(`/conversations/${selectedUser.value.user_id}`)
       const newMsgs = res.data
-      // Only update if there are new messages (compare last id)
       const lastOld = messages.value.filter(m => !String(m.id).startsWith('tmp_')).at(-1)?.id
       const lastNew = newMsgs.at(-1)?.id
       if (lastNew && lastNew !== lastOld) {
@@ -252,7 +238,6 @@ const poll = async () => {
   }
 }
 
-// ── Auto-open conversation (from contact button) ───────────────────────────
 const openAutoConv = async ({ userId, name }) => {
   if (!userId) return
   await loadConversations()
@@ -265,12 +250,11 @@ const openAutoConv = async ({ userId, name }) => {
     searchResults.value = []
     loadingMsgs.value   = true
     try {
-      const res = await axios.get(`${BASE}/conversations/${userId}`, { headers: h() })
+      const res = await api.get(`/conversations/${userId}`)
       messages.value = res.data
       await scrollBottom()
     } catch { messages.value = [] }
     finally { loadingMsgs.value = false }
-    // Add to conversation list if not present
     if (!conversations.value.find(c => c.user_id === userId)) {
       conversations.value.unshift({ user_id: userId, name, lastMessage: '...', time: '', unread: false })
     }
@@ -284,7 +268,6 @@ const scrollBottom = async () => {
 }
 const initials = (name) => name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U'
 
-// Handle event-based open (from freelancer MissionCard)
 const handleOpenConv = (e) => { openAutoConv(e.detail) }
 
 onMounted(async () => {
