@@ -115,20 +115,6 @@ class MessageController extends Controller
         );
     }
 
-    public function searchUsers(Request $request)
-    {
-        $q      = $request->get('q', '');
-        $userId = $request->user()->id;
-
-        $users = User::where('id', '!=', $userId)
-            ->where('name', 'like', "%{$q}%")
-            ->with('role')
-            ->limit(10)
-            ->get();
-
-        return response()->json($users);
-    }
-
     private function initials(?string $name): string
     {
         if (!$name) return 'U';
