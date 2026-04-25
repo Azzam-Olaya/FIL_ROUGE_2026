@@ -24,6 +24,16 @@ export const useFreelancerStore = defineStore('freelancer', () => {
     }
   }
 
+  const favoritedBriefs = ref([])
+  const isBriefFavorited = (id) => favoritedBriefs.value.some(b => b.id === id)
+  const toggleBriefFavorite = (brief) => {
+    if (isBriefFavorited(brief.id)) {
+      favoritedBriefs.value = favoritedBriefs.value.filter(b => b.id !== brief.id)
+    } else {
+      favoritedBriefs.value.push(brief)
+    }
+  }
+
   // ── Likes ──────────────────────────────────────────────────────────────────
   const likedIds = ref([])
   const isLiked = (id) => likedIds.value.includes(id)
@@ -44,6 +54,7 @@ export const useFreelancerStore = defineStore('freelancer', () => {
   const markRead = (id) => { const n = notifications.value.find(n => n.id === id); if (n) n.read = true }
 
   const fetchNotifications = async () => {
+    if (!authStore.user) return
     try {
       const res = await api.get('/freelancer/notifications')
       notifications.value = res.data
@@ -56,6 +67,16 @@ export const useFreelancerStore = defineStore('freelancer', () => {
         ]
       }
     }
+  }
+
+  const fetchFavorites = async () => {
+    if (!authStore.user) return
+    try {
+      const res_m = await api.get('/freelancer/missions/favorites')
+      favoritedMissions.value = res_m.data
+      const res_b = await api.get('/freelancer/favorites')
+      favoritedBriefs.value = res_b.data
+    } catch (e) { console.error("Error fetching favorites", e) }
   }
 
   let _pollingTimer = null
@@ -75,5 +96,6 @@ export const useFreelancerStore = defineStore('freelancer', () => {
     likedIds, isLiked, toggleLike,
     notifications, unreadCount, markAllRead, markRead, fetchNotifications, startPolling,
     searchQuery, searchCategory,
+    favoritedBriefs, isBriefFavorited, toggleBriefFavorite, fetchFavorites
   }
 })
