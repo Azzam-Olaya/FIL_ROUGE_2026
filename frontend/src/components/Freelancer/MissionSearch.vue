@@ -117,7 +117,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import axios from 'axios'
+import api from '@/api/axios'
 
 const missions = ref([])
 const categories = ref([])
@@ -125,9 +125,6 @@ const loading = ref(false)
 let debounceTimer = null
 
 const filters = ref({ search: '', category_id: null, sub_category_id: null, budget_max: '' })
-
-const token = () => localStorage.getItem('token')
-const headers = computed(() => ({ Authorization: `Bearer ${token()}` }))
 
 const rootCategories = computed(() => categories.value.filter(c => !c.parent_id))
 const subCategories = computed(() => {
@@ -149,7 +146,7 @@ const load = async () => {
     else if (filters.value.category_id) params.category_id = filters.value.category_id
     if (filters.value.budget_max)      params.budget_max = filters.value.budget_max
 
-    const res = await axios.get('http://localhost:8000/api/freelancer/missions', { headers: headers.value, params })
+    const res = await api.get('/freelancer/missions', { params })
     missions.value = res.data
   } finally {
     loading.value = false
@@ -157,7 +154,7 @@ const load = async () => {
 }
 
 const loadCategories = async () => {
-  const res = await axios.get('http://localhost:8000/api/freelancer/categories', { headers: headers.value })
+  const res = await api.get('/freelancer/categories')
   categories.value = res.data
 }
 
