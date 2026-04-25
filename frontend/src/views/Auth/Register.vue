@@ -97,9 +97,11 @@
 <script setup>
 import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import axios from 'axios';
+import api from '@/api/axios';
+import { useAuthStore } from '@/stores/auth';
 
 const router = useRouter();
+const authStore = useAuthStore();
 const loading = ref(false);
 const errorMessage = ref('');
 const formErrors = ref({});
@@ -116,8 +118,8 @@ const handleRegister = async () => {
   formErrors.value = {};
 
   try {
-    const response = await axios.post('http://localhost:8000/api/register', form);
-    localStorage.setItem('token', response.data.access_token);
+    const res = await api.post('/register', form);
+    authStore.setAuth(res.data.user, res.data.access_token);
     router.push('/verify-identity');
   } catch (err) {
     const response = err.response?.data;
