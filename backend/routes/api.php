@@ -31,6 +31,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Client
     Route::prefix('client')->group(function () {
+        Route::get('/categories', [FreelancerController::class, 'getCategories']);
         Route::post('/missions', [ClientController::class, 'storeMission']);
         Route::get('/missions', [ClientController::class, 'getMyMissions']);
         Route::get('/stats', [ClientController::class, 'getStats']);
@@ -68,6 +69,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/profile/password', [FreelancerController::class, 'changePassword']);
         Route::get('/notifications', [FreelancerController::class, 'getNotifications']);
         Route::get('/suggested', [FreelancerController::class, 'getSuggestedFreelancers']);
+        Route::get('/categories', [FreelancerController::class, 'getCategories']);
     });
 
     // Messages & Search
