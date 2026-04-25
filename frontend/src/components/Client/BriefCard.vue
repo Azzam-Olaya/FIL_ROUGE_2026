@@ -5,15 +5,19 @@
     <div class="flex items-start justify-between gap-3 p-6 pb-4">
       <div class="flex items-center gap-3">
         <div class="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-md shadow-primary/20">
-          {{ initials(brief.freelancer?.name) }}
+          {{ initials(brief.freelancerName) }}
         </div>
         <div>
-          <p class="font-bold text-sm text-on-surface">{{ brief.freelancer?.name || 'Freelancer' }}</p>
+          <p class="font-bold text-sm text-on-surface">{{ brief.freelancerName || 'Freelancer' }}</p>
           <div class="flex items-center gap-2 mt-0.5">
             <span class="text-[10px] font-bold text-white bg-primary px-2.5 py-0.5 rounded-full">
-              {{ brief.category?.name || 'Sans catégorie' }}
+              {{ brief.category || 'Sans catégorie' }}
             </span>
-            <span v-if="brief.timeline" class="text-[10px] text-on-surface-variant flex items-center gap-1">
+            <span class="text-[10px] text-on-surface-variant flex items-center gap-1">
+              <span class="material-symbols-outlined text-[11px]">calendar_today</span>
+              {{ new Date(brief.createdAt || brief.created_at).toLocaleDateString('fr-FR') }}
+            </span>
+            <span v-if="brief.timeline" class="text-[10px] text-on-surface-variant flex items-center gap-1 border-l border-primary/10 pl-2">
               <span class="material-symbols-outlined text-[11px]">schedule</span>{{ brief.timeline }}
             </span>
           </div>
@@ -44,12 +48,12 @@
           <span class="w-4 h-4 rounded-full bg-secondary flex items-center justify-center">
             <span class="material-symbols-outlined text-white" style="font-size:10px;font-variation-settings:'FILL' 1">favorite</span>
           </span>
-          {{ brief.likes_count || 0 }} j'aime
+          {{ brief.likes || 0 }} j'aime
         </span>
       </div>
       <div class="flex items-center gap-3">
         <button @click="toggleComments" class="hover:text-primary hover:underline transition-colors">
-          {{ brief.comments_count || 0 }} commentaire{{ (brief.comments_count || 0) !== 1 ? 's' : '' }}
+          {{ brief.comments || 0 }} commentaire{{ (brief.comments || 0) !== 1 ? 's' : '' }}
         </button>
         <span>·</span>
         <span>{{ brief.favorites_count || 0 }} favori{{ (brief.favorites_count || 0) !== 1 ? 's' : '' }}</span>
@@ -138,10 +142,10 @@
           </div>
           <div class="bg-primary/5 rounded-2xl p-4 mb-4 border border-primary/10 flex items-center gap-3">
             <div class="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-              {{ initials(brief.freelancer?.name) }}
+              {{ initials(brief.freelancerName) }}
             </div>
             <div>
-              <p class="font-bold text-on-surface">{{ brief.freelancer?.name || 'Freelancer' }}</p>
+              <p class="font-bold text-on-surface">{{ brief.freelancerName || 'Freelancer' }}</p>
               <p class="text-xs text-on-surface-variant mt-0.5">{{ brief.title }}</p>
             </div>
           </div>
@@ -165,7 +169,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useClientStore } from '@/stores/client'
-import axios from 'axios'
+import api from '@/api/axios'
 
 const props = defineProps({ brief: { type: Object, required: true } })
 const store = useClientStore()
@@ -183,12 +187,12 @@ const initials = (n) => n?.split(' ').map(x => x[0]).join('').toUpperCase().slic
 
 const toggleLike = async () => {
   store.toggleLike(props.brief)
-  try { await axios.post(`http://localhost:8000/api/client/briefs/${props.brief.id}/like`, {}, { headers: store.authHeaders }) } catch {}
+  try { await api.post(`/client/briefs/${props.brief.id}/like`) } catch {}
 }
 
 const toggleFavorite = async () => {
   store.toggleFavorite(props.brief)
-  try { await axios.post(`http://localhost:8000/api/client/briefs/${props.brief.id}/favorite`, {}, { headers: store.authHeaders }) } catch {}
+  try { await api.post(`/client/briefs/${props.brief.id}/favorite`) } catch {}
 }
 
 const toggleComments = async () => {
@@ -196,7 +200,7 @@ const toggleComments = async () => {
   if (showComments.value && !commentsList.value.length) {
     loadingComments.value = true
     try {
-      const res = await axios.get(`http://localhost:8000/api/client/briefs/${props.brief.id}/comments`, { headers: store.authHeaders })
+      const res = await api.get(`/client/briefs/${props.brief.id}/comments`)
       commentsList.value = res.data
     } catch {} finally { loadingComments.value = false }
   }
@@ -207,31 +211,30 @@ const addComment = async () => {
   const text = newComment.value.trim()
   newComment.value = ''
   commentsList.value.push({ user: { name: store.userName }, body: text })
-  props.brief.comments_count = (props.brief.comments_count || 0) + 1
-  try { await axios.post(`http://localhost:8000/api/client/briefs/${props.brief.id}/comment`, { text }, { headers: store.authHeaders }) } catch {}
+  props.brief.comments = (props.brief.comments || 0) + 1
+  try { await api.post(`/client/briefs/${props.brief.id}/comment`, { body: text }) } catch {}
 }
 
 const sendContact = async () => {
   if (!contactMessage.value.trim()) return
   sending.value = true
   try {
-    const receiverId = props.brief.freelancer?.id
+    const receiverId = props.brief.freelancerId
     if (receiverId) {
-      await axios.post('http://localhost:8000/api/messages', {
+      await api.post('/messages', {
         receiver_id: receiverId,
         content: contactMessage.value,
-      }, { headers: store.authHeaders })
+      })
     }
   } catch {}
-  // Always close and navigate regardless of API result
   showContactModal.value = false
   contactMessage.value   = ''
   window.dispatchEvent(new CustomEvent('client-tab', { detail: 'messages' }))
   setTimeout(() => {
     window.dispatchEvent(new CustomEvent('open-conversation', {
       detail: {
-        userId: props.brief.freelancer?.id,
-        name:   props.brief.freelancer?.name || 'Freelancer',
+        userId: props.brief.freelancerId,
+        name:   props.brief.freelancerName || 'Freelancer',
       }
     }))
   }, 150)
