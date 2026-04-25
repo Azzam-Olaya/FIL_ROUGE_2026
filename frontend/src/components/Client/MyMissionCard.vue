@@ -1,87 +1,97 @@
 <template>
   <div class="bg-white rounded-[2rem] border border-primary/10 shadow-sm hover:shadow-md transition-all">
-
-    <!-- Header: category + status + budget -->
-    <div class="flex items-start justify-between gap-4 p-6 pb-4">
-      <div class="flex-1">
-        <div class="flex items-center gap-2 mb-2">
-          <span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant bg-surface-container px-3 py-1 rounded-full flex items-center gap-1">
-            <span class="material-symbols-outlined text-xs" style="font-size: 14px">schedule</span>
-            {{ new Date(mission.created_at).toLocaleDateString('fr-FR') }}
-          </span>
-          <span :class="statusClass(mission.status)" class="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full">
-            {{ statusLabel(mission.status) }}
-          </span>
+    
+    <!-- Header: Avatar + Name + Category + Date -->
+    <div class="flex items-start justify-between gap-3 p-6 pb-4">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-md shadow-primary/20">
+          {{ store.userInitials }}
         </div>
-        <h3 class="font-headline text-lg font-bold text-on-surface mb-1">{{ mission.title }}</h3>
-        <p class="text-on-surface-variant text-sm leading-relaxed" :class="expanded ? '' : 'line-clamp-2'">
-          {{ mission.description }}
-        </p>
-        <button v-if="mission.description?.length > 150" @click="expanded = !expanded"
-          class="text-primary text-xs font-bold mt-1 hover:underline">
-          {{ expanded ? 'Voir moins' : 'Voir plus' }}
-        </button>
+        <div>
+          <div class="flex items-center gap-2">
+            <p class="font-bold text-sm text-on-surface">{{ store.userName }}</p>
+            <span :class="statusClass(mission.status)" class="text-[9px] font-black uppercase px-2 py-0.5 rounded-full tracking-tighter">
+              {{ statusLabel(mission.status) }}
+            </span>
+          </div>
+          <div class="flex items-center gap-2 mt-0.5">
+            <span class="text-[10px] font-bold text-white bg-primary px-2.5 py-0.5 rounded-full">
+              {{ mission.category?.name || (mission.categories?.[0]?.name) || 'Mission' }}
+            </span>
+            <span class="text-[10px] text-on-surface-variant flex items-center gap-1">
+              <span class="material-symbols-outlined text-[12px]">calendar_today</span>
+              {{ new Date(mission.created_at).toLocaleDateString('fr-FR') }}
+            </span>
+          </div>
+        </div>
       </div>
       <div class="text-right flex-shrink-0">
-        <p class="font-black text-xl text-primary">{{ mission.budget }} DH</p>
+        <p class="text-primary font-black text-xl">{{ mission.budget }} DH</p>
         <p class="text-[10px] text-on-surface-variant font-medium">Budget</p>
       </div>
     </div>
 
-    <!-- Categories pills (Languages/Skills) -->
-    <div v-if="mission.categories?.length" class="px-6 pb-3 flex flex-wrap gap-2">
-      <span v-for="cat in mission.categories" :key="cat.id"
-        class="text-[10px] font-bold text-secondary bg-secondary/10 px-3 py-1.5 rounded-lg flex items-center gap-1">
-        <span class="material-symbols-outlined" style="font-size: 12px">terminal</span>
-        {{ cat.name }}
-      </span>
+    <!-- Body: Title + Description -->
+    <div class="px-6 pb-4">
+      <h3 class="font-headline text-lg font-bold text-on-surface mb-2">{{ mission.title }}</h3>
+      <p class="text-on-surface-variant text-sm leading-relaxed" :class="expanded ? '' : 'line-clamp-3'">
+        {{ mission.description }}
+      </p>
+      <button v-if="mission.description?.length > 180" @click="expanded = !expanded"
+        class="text-primary text-xs font-bold mt-1 hover:underline">
+        {{ expanded ? 'Voir moins' : 'Voir plus' }}
+      </button>
+    </div>
+
+    <!-- Skills tags -->
+    <div v-if="mission.categories?.length > 1" class="px-6 pb-3 flex flex-wrap gap-2">
+      <template v-for="cat in mission.categories" :key="cat.id">
+        <span v-if="cat.id !== mission.category_id"
+          class="text-[10px] font-bold text-secondary bg-secondary/10 px-3 py-1.5 rounded-lg flex items-center gap-1">
+          <span class="material-symbols-outlined" style="font-size: 12px">terminal</span>
+          {{ cat.name }}
+        </span>
+      </template>
     </div>
 
     <!-- Meta: deadline -->
-    <div class="px-6 pb-3 border-b border-primary/5">
-      <p class="text-xs text-on-surface-variant flex items-center gap-1.5">
-        <span class="material-symbols-outlined text-sm">calendar_today</span>
-        Deadline : {{ mission.deadline ? new Date(mission.deadline).toLocaleDateString('fr-FR') : '—' }}
+    <div class="px-6 pb-3 opacity-70">
+      <p class="text-[11px] text-on-surface-variant font-bold flex items-center gap-1.5 uppercase tracking-wider">
+        <span class="material-symbols-outlined text-sm">event</span>
+        Échéance : {{ mission.deadline ? new Date(mission.deadline).toLocaleDateString('fr-FR') : '—' }}
       </p>
     </div>
 
     <!-- Counters bar -->
-    <div class="px-6 py-2 flex items-center justify-between border-b border-primary/5 text-xs text-on-surface-variant">
-      <div class="flex items-center gap-3">
-        <button @click="toggleLikes" class="flex items-center gap-1 hover:text-primary transition-colors">
-          <span class="w-4 h-4 rounded-full bg-secondary flex items-center justify-center">
-            <span class="material-symbols-outlined text-white" style="font-size:10px;font-variation-settings:'FILL' 1">favorite</span>
-          </span>
-          {{ mission.likes_count || 0 }} j'aime
-        </button>
-      </div>
-      <div class="flex items-center gap-3">
-        <button @click="toggleComments" class="hover:text-primary hover:underline transition-colors">
-          {{ mission.comments_count || 0 }} commentaire{{ (mission.comments_count || 0) !== 1 ? 's' : '' }}
-        </button>
-      </div>
+    <div class="px-6 py-2 flex items-center justify-between border-t border-b border-primary/5 text-[11px] font-bold text-on-surface-variant/70">
+      <button @click="toggleLikes" class="flex items-center gap-1.5 hover:text-secondary transition-colors group">
+        <span class="w-5 h-5 rounded-full bg-secondary/10 flex items-center justify-center group-hover:bg-secondary group-hover:text-white transition-colors">
+          <span class="material-symbols-outlined text-[10px] font-black" style="font-variation-settings:'FILL' 1">favorite</span>
+        </span>
+        {{ mission.likes_count || 0 }} j'aime
+      </button>
+      <button @click="toggleComments" class="flex items-center gap-1.5 hover:text-primary transition-colors group">
+        <span class="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
+          <span class="material-symbols-outlined text-[10px] font-black">chat_bubble</span>
+        </span>
+        {{ mission.comments_count || 0 }} commentaire{{ (mission.comments_count || 0) !== 1 ? 's' : '' }}
+      </button>
     </div>
 
-    <!-- Action buttons -->
-    <div class="px-4 py-2 flex items-center gap-2 border-b border-primary/5">
+    <!-- Action buttons Row -->
+    <div class="px-4 py-2 flex items-center border-b border-primary/5">
       <button @click="toggleComments"
         :class="showComments ? 'text-primary bg-primary/10' : 'text-on-surface-variant hover:bg-surface-container hover:text-primary'"
-        class="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl transition-all font-semibold text-sm">
+        class="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl transition-all font-bold text-xs uppercase tracking-widest">
         <span class="material-symbols-outlined text-base">chat_bubble</span>
         Commentaires
-      </button>
-      <button @click="toggleLikes"
-        :class="showLikes ? 'text-secondary bg-secondary/10' : 'text-on-surface-variant hover:bg-surface-container hover:text-secondary'"
-        class="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl transition-all font-semibold text-sm">
-        <span class="material-symbols-outlined text-base">favorite</span>
-        Favoris
       </button>
     </div>
 
     <!-- Likes List Section -->
-    <div v-if="showLikes" class="px-6 py-4 bg-surface-container/30 border-b border-primary/5 animate-in">
-      <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-3 flex items-center gap-2">
-        <span class="material-symbols-outlined text-sm font-black">favorite</span>
+    <div v-if="showLikes" class="px-6 py-4 bg-surface-container/20 border-b border-primary/5 animate-in">
+      <p class="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/60 mb-4 flex items-center gap-2">
+        <span class="material-symbols-outlined text-xs font-black">favorite</span>
         Freelancers ayant aimé
       </p>
       <div v-if="loadingLikes" class="flex justify-center py-4">
@@ -89,43 +99,46 @@
       </div>
       <div v-else-if="likesList.length" class="flex flex-wrap gap-2">
         <div v-for="user in likesList" :key="user.id" 
-             class="flex items-center gap-2 bg-white border border-primary/10 pl-1 pr-3 py-1 rounded-full shadow-sm hover:border-primary/30 transition-colors">
-          <div class="w-6 h-6 rounded-full bg-secondary flex items-center justify-center text-white font-bold text-[9px]">
+             class="flex items-center gap-2 bg-white border border-primary/5 pl-1 pr-3 py-1 rounded-full shadow-sm hover:border-primary/20 transition-all cursor-default">
+          <div class="w-6 h-6 rounded-full bg-secondary flex items-center justify-center text-white font-bold text-[8px] shadow-sm">
             {{ initials(user.name) }}
           </div>
-          <span class="text-xs font-bold text-on-surface">{{ user.name }}</span>
+          <span class="text-[11px] font-bold text-on-surface">{{ user.name }}</span>
         </div>
       </div>
       <p v-else class="text-center text-xs text-on-surface-variant py-4 italic">Aucun like pour le moment</p>
     </div>
 
     <!-- Comments section -->
-    <div v-if="showComments" class="px-6 py-4 space-y-4">
-      <!-- Loading -->
+    <div v-if="showComments" class="px-6 py-4 space-y-4 bg-surface-container/10 border-b border-primary/5 animate-in">
+      <p class="text-[9px] font-black uppercase tracking-widest text-on-surface-variant/60 mb-2 flex items-center gap-2">
+        <span class="material-symbols-outlined text-xs font-black">chat_bubble</span>
+        Discussions
+      </p>
       <div v-if="loadingComments" class="flex justify-center py-3">
         <span class="material-symbols-outlined text-primary/30 animate-spin">progress_activity</span>
       </div>
-
-      <!-- Comments list -->
-      <div v-else-if="commentsList.length" class="space-y-3">
-        <div v-for="(c, i) in commentsList" :key="i" class="flex gap-3 items-start">
-          <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold text-[10px] flex-shrink-0">
+      <div v-else-if="commentsList.length" class="space-y-4">
+        <div v-for="(c, i) in commentsList" :key="i" class="group flex gap-3 items-start">
+          <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white font-bold text-xs flex-shrink-0 shadow-lg shadow-primary/10">
             {{ initials(c.user?.name || c.author) }}
           </div>
-          <div class="flex-1 bg-surface-container rounded-2xl px-4 py-3">
-            <div class="flex items-center justify-between gap-2 mb-1">
-              <p class="font-bold text-xs text-on-surface">{{ c.user?.name || c.author }}</p>
-              <button @click="contactFreelancer(c)"
-                class="flex items-center gap-1 px-3 py-1 rounded-full bg-primary text-white text-[10px] font-bold hover:scale-105 transition-transform flex-shrink-0">
-                <span class="material-symbols-outlined" style="font-size:12px">mail</span>
-                Contacter
-              </button>
+          <div class="flex-1">
+            <div class="bg-white border border-primary/5 rounded-2xl px-5 py-4 shadow-sm group-hover:border-primary/20 transition-all">
+              <div class="flex items-center justify-between gap-2 mb-2">
+                <p class="font-bold text-xs text-on-surface">{{ c.user?.name || c.author }}</p>
+                <button @click="contactFreelancer(c)"
+                  class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-tighter hover:bg-primary hover:text-white transition-all">
+                  <span class="material-symbols-outlined" style="font-size:12px">mail</span>
+                  Contacter
+                </button>
+              </div>
+              <p class="text-sm text-on-surface-variant leading-relaxed">{{ c.body || c.text }}</p>
             </div>
-            <p class="text-sm text-on-surface-variant leading-relaxed">{{ c.body || c.text }}</p>
           </div>
         </div>
       </div>
-      <p v-else class="text-center text-xs text-on-surface-variant py-3">Aucun commentaire pour le moment</p>
+      <p v-else class="text-center text-xs text-on-surface-variant py-3 italic">Aucun commentaire pour le moment</p>
     </div>
 
     <!-- Contact Modal -->
