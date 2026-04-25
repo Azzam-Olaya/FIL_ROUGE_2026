@@ -1,17 +1,24 @@
 <template>
-  <header class="bg-surface-container border-b border-primary/10 flex items-center w-full px-6 py-3 fixed top-0 left-0 right-0 z-50 h-16 gap-4">
+  <header class="bg-surface-container border-b border-primary/10 flex items-center w-full px-4 md:px-6 py-3 fixed top-0 left-0 right-0 z-50 h-16 gap-2 md:gap-4">
 
-    <!-- Logo -->
-    <router-link to="/" class="flex items-center gap-2 flex-shrink-0 mr-4">
-      <span class="material-symbols-outlined text-primary text-2xl" style="font-variation-settings: 'FILL' 1">auto_awesome</span>
-      <div class="flex flex-col">
-        <span class="font-headline font-black italic text-xl text-primary tracking-tight leading-none">MorLancer</span>
-        <span class="text-[10px] text-on-surface-variant font-bold uppercase tracking-[0.15em] leading-none mt-0.5">Talents digitaux</span>
-      </div>
-    </router-link>
+    <!-- Left: Hamburger + Logo -->
+    <div class="flex items-center gap-2 md:gap-4 flex-shrink-0">
+      <!-- Hamburger Menu for Mobile -->
+      <button @click="$emit('toggle-sidebar')" class="p-2 -ml-2 text-on-surface-variant lg:hidden hover:bg-primary/10 rounded-full transition-colors">
+        <span class="material-symbols-outlined">menu</span>
+      </button>
 
-    <!-- Search + Filter center -->
-    <div class="flex-1 flex items-center gap-3 max-w-2xl mx-auto">
+      <router-link to="/" class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary text-2xl" style="font-variation-settings: 'FILL' 1">auto_awesome</span>
+        <div class="flex flex-col">
+          <span class="font-headline font-black italic text-lg md:text-xl text-primary tracking-tight leading-none">MorLancer</span>
+          <span class="hidden sm:block text-[8px] md:text-[10px] text-on-surface-variant font-bold uppercase tracking-[0.15em] leading-none mt-0.5">Talents digitaux</span>
+        </div>
+      </router-link>
+    </div>
+
+    <!-- Search + Filter center (Hidden on mobile, search icon used instead) -->
+    <div class="hidden md:flex flex-1 items-center gap-3 max-w-2xl mx-auto">
       <div class="relative flex-1">
         <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
         <input v-model="searchQuery" @input="onSearch" @keyup.enter="onSearch"
@@ -29,7 +36,12 @@
     </div>
 
     <!-- Right icons -->
-    <div class="flex items-center gap-1 flex-shrink-0 ml-4" ref="iconsRef">
+    <div class="flex items-center gap-0 md:gap-1 flex-shrink-0" ref="iconsRef">
+      
+      <!-- Mobile Search Icon -->
+      <button class="md:hidden p-2 rounded-full hover:bg-primary/10 transition-colors text-on-surface-variant">
+        <span class="material-symbols-outlined">search</span>
+      </button>
 
       <!-- Notifications -->
       <div class="relative">
@@ -150,20 +162,24 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useClientStore } from '@/stores/client'
-import axios from 'axios'
+import { useAuthStore }   from '@/stores/auth'
+import api from '@/api/axios'
 
-const emit = defineEmits(['search'])
-const store = useClientStore()
+const emit = defineEmits(['search', 'toggle-sidebar'])
+const store     = useClientStore()
+const authStore = useAuthStore()
+const router    = useRouter()
 
-const notifOpen   = ref(false)
-const favOpen     = ref(false)
-const profileOpen = ref(false)
+const notifOpen    = ref(false)
+const favOpen      = ref(false)
+const profileOpen  = ref(false)
 const loadingNotif = ref(false)
-const searchQuery  = ref('')
+const searchQuery   = ref('')
 const categoryFilter = ref('')
-const categories   = ref([])
-const iconsRef     = ref(null)
+const categories    = ref([])
+const iconsRef      = ref(null)
 
 const toggleNotif = async () => {
   notifOpen.value   = !notifOpen.value
@@ -184,7 +200,10 @@ const go = (tab) => {
   window.dispatchEvent(new CustomEvent('client-tab', { detail: tab }))
 }
 
-const logout = () => { localStorage.clear(); window.location.href = '/login' }
+const logout = () => { 
+  authStore.clearAuth()
+  router.push('/login')
+}
 
 const timeAgo = (d) => {
   if (!d) return ''
@@ -207,7 +226,7 @@ const handleOutside = (e) => {
 
 const loadCategories = async () => {
   try {
-    const res = await axios.get('http://localhost:8000/api/freelancer/categories', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
+    const res = await api.get('/freelancer/categories')
     categories.value = res.data.filter(c => !c.parent_id)
   } catch { categories.value = [] }
 }
