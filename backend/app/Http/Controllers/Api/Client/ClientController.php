@@ -131,16 +131,34 @@ class ClientController extends Controller
         return response()->json(['ok' => true]);
     }
 
-    public function getBriefs()
+    public function getBriefs(Request $request)
     {
+        $query = \App\Models\Portfolio::with(['freelancer', 'category', 'likes', 'comments.user']);
+
+        if ($request->search) {
+            $s = $request->search;
+            $query->where(function($q) use ($s) {
+                $q->where('title', 'like', "%{$s}%")
+                  ->orWhere('description', 'like', "%{$s}%");
+            });
+        }
+
+        if ($request->category_id) {
+            $catId = $request->category_id;
+            // Include subcategories if any
+            $childIds = \App\Models\Category::where('parent_id', $catId)->pluck('id')->toArray();
+            $ids = array_merge([$catId], $childIds);
+            $query->whereIn('category_id', $ids);
+        }
+
         return response()->json(
-            \App\Models\Portfolio::with(['freelancer', 'category', 'likes', 'comments.user'])
-                ->latest()->get()
+            $query->latest()->get()
                 ->map(fn($b) => [
                     'id'          => $b->id,
                     'title'       => $b->title,
                     'description' => $b->description,
                     'category'    => $b->category?->name,
+                    'category_id' => $b->category_id,
                     'freelancerName' => $b->freelancer?->name,
                     'freelancerId'   => $b->freelancer_id,
                     'price'       => $b->price,
