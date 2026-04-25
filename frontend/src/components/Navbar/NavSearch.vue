@@ -1,5 +1,5 @@
 <template>
-  <div class="hidden lg:flex items-center gap-3 flex-1 max-w-lg mx-8">
+  <div class="hidden md:flex items-center gap-3 flex-1 max-w-lg mx-8">
     <div class="relative flex-1">
       <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
       <input v-model="localQuery" @input="updateSearch" @keyup.enter="updateSearch"
