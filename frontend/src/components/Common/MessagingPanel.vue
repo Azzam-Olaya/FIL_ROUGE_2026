@@ -8,26 +8,6 @@
         <div v-if="loadingConvs" class="w-4 h-4 border-2 border-primary/20 border-t-primary rounded-full animate-spin"></div>
       </div>
 
-      <div class="p-3 border-b border-primary/5 relative">
-        <div class="flex items-center gap-2 bg-surface-container rounded-xl px-3 py-2">
-          <span class="material-symbols-outlined text-sm text-on-surface-variant">person_search</span>
-          <input v-model="searchQuery" @input="onSearch" placeholder="Nouvelle conversation..."
-            class="bg-transparent border-none focus:ring-0 text-xs w-full outline-none" />
-          <button v-if="searchQuery" @click="searchQuery = ''; searchResults = []">
-            <span class="material-symbols-outlined text-xs text-on-surface-variant">close</span>
-          </button>
-        </div>
-        <div v-if="searchResults.length" class="absolute left-3 right-3 top-14 bg-white rounded-xl shadow-xl border border-primary/5 z-10 overflow-hidden">
-          <div v-for="u in searchResults" :key="u.id" @click="startConversation(u)"
-            class="flex items-center gap-3 px-4 py-3 hover:bg-primary/5 cursor-pointer transition-colors">
-            <div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold flex-shrink-0">{{ initials(u.name) }}</div>
-            <div>
-              <p class="text-sm font-bold text-on-surface">{{ u.name }}</p>
-              <p class="text-[10px] text-on-surface-variant capitalize">{{ u.role?.name || 'Utilisateur' }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <div class="flex-1 overflow-y-auto divide-y divide-primary/5">
         <div v-if="!loadingConvs && conversations.length === 0" class="text-center py-12 opacity-40">
@@ -102,7 +82,7 @@
     <section v-else class="flex-1 hidden md:flex flex-col items-center justify-center p-12 opacity-30 text-center">
       <span class="material-symbols-outlined text-8xl mb-4 text-primary" style="font-variation-settings: 'wght' 100">forum</span>
       <h3 class="font-headline text-xl font-bold">Vos messages</h3>
-      <p class="text-sm mt-2">Sélectionnez une conversation ou recherchez un utilisateur</p>
+      <p class="text-sm mt-2">Sélectionnez une conversation pour commencer</p>
     </section>
   </div>
 </template>
@@ -118,13 +98,11 @@ const conversations = ref([])
 const messages      = ref([])
 const selectedUser  = ref(null)
 const newMessage    = ref('')
-const searchQuery   = ref('')
-const searchResults = ref([])
 const loadingConvs  = ref(false)
 const loadingMsgs   = ref(false)
 const sending       = ref(false)
 const messagesEl    = ref(null)
-let pollingTimer = null, searchTimer = null
+let pollingTimer = null
 
 // ── Conversations ──────────────────────────────────────────────────────────
 const loadConversations = async () => {
@@ -139,8 +117,6 @@ const loadConversations = async () => {
 // ── Open a conversation ────────────────────────────────────────────────────
 const openConversation = async (conv) => {
   selectedUser.value  = conv
-  searchQuery.value   = ''
-  searchResults.value = []
   loadingMsgs.value   = true
   messages.value      = []
   try {
@@ -155,23 +131,6 @@ const openConversation = async (conv) => {
   } finally { loadingMsgs.value = false }
 }
 
-// ── Start new conversation from search ────────────────────────────────────
-const startConversation = async (user) => {
-  searchQuery.value   = ''
-  searchResults.value = []
-  const existing = conversations.value.find(c => c.user_id === user.id)
-  if (existing) {
-    await openConversation(existing)
-  } else {
-    selectedUser.value = { user_id: user.id, name: user.name, role: user.role?.name }
-    messages.value = []
-    try {
-      const res = await api.get(`/conversations/${user.id}`)
-      messages.value = res.data
-      await scrollBottom()
-    } catch {}
-  }
-}
 
 // ── Send message ───────────────────────────────────────────────────────────
 const sendMessage = async () => {
@@ -205,17 +164,6 @@ const sendMessage = async () => {
   } finally { sending.value = false }
 }
 
-// ── Search users ───────────────────────────────────────────────────────────
-const onSearch = () => {
-  clearTimeout(searchTimer)
-  if (searchQuery.value.trim().length < 2) { searchResults.value = []; return }
-  searchTimer = setTimeout(async () => {
-    try {
-      const res = await api.get(`/users/search?q=${encodeURIComponent(searchQuery.value)}`)
-      searchResults.value = res.data
-    } catch { searchResults.value = [] }
-  }, 300)
-}
 
 // ── Polling: check for new messages ───────────────────────────────────────
 const poll = async () => {
@@ -246,8 +194,6 @@ const openAutoConv = async ({ userId, name }) => {
     await openConversation(existing)
   } else {
     selectedUser.value  = { user_id: userId, name, role: 'Utilisateur' }
-    searchQuery.value   = ''
-    searchResults.value = []
     loadingMsgs.value   = true
     try {
       const res = await api.get(`/conversations/${userId}`)
