@@ -64,7 +64,7 @@
                 <span class="material-symbols-outlined text-2xl text-primary/30 animate-spin block">progress_activity</span>
               </div>
               <template v-else-if="store.notifications.length">
-                <div v-for="n in store.notifications" :key="n.id" @click="store.markRead(n.id); notifOpen=false"
+                <div v-for="n in store.notifications" :key="n.id" @click="handleClick(n)"
                   :class="!n.read ? 'bg-primary/5 border-l-4 border-primary' : 'bg-white'"
                   class="flex gap-3 px-4 py-3 hover:bg-primary/10 cursor-pointer transition-colors">
                   <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" :class="iconBg(n.type)">
@@ -190,6 +190,15 @@ const toggleNotif = async () => {
     await store.fetchNotifications()
     loadingNotif.value = false
   }
+}
+
+const handleClick = (n) => {
+  store.markRead(n.id)
+  notifOpen.value = false
+  if (n.type === 'message') go('messages')
+  else if (n.type === 'like' || n.type === 'comment') go('briefs')
+  else if (n.type === 'contract') go('contracts')
+  else go('dashboard')
 }
 
 const onSearch = () => emit('search', { query: searchQuery.value, category: categoryFilter.value })
