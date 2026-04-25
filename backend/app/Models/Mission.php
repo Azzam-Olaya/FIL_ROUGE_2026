@@ -55,4 +55,9 @@ class Mission extends Model
     {
         return $this->hasMany(MissionComment::class);
     }
+
+    public function categories()
+    {
+        return $this->belongsToMany(Category::class, 'mission_category');
+    }
 }
