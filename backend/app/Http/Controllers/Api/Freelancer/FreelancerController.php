@@ -26,8 +26,8 @@ class FreelancerController extends Controller
 
         if ($request->search) {
             $query->where(function($q) use ($request) {
-                $q->where('title', 'ilike', '%' . $request->search . '%')
-                  ->orWhere('description', 'ilike', '%' . $request->search . '%');
+                $q->where('title', 'like', '%' . $request->search . '%')
+                  ->orWhere('description', 'like', '%' . $request->search . '%');
             });
         }
 
