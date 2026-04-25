@@ -224,7 +224,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import TopNavBarClient from '@/components/Common/TopNavBarClient.vue'
 import ClientSidebar   from '@/components/Client/Sidebar.vue'
 import BriefCard       from '@/components/Client/BriefCard.vue'
@@ -237,6 +237,7 @@ import api from '@/api/axios'
 
 const store        = useClientStore()
 const route        = useRoute()
+const router       = useRouter()
 const activeTab    = ref(route.query.tab || 'dashboard')
 const sidebarOpen  = ref(false)
 
@@ -360,7 +361,10 @@ const handleTabEvent = (e) => { activeTab.value = e.detail }
 const handleOpenConv  = (e) => { pendingConversation.value = e.detail; activeTab.value = 'messages' }
 
 watch(() => route.query.tab, (t) => { if (t) activeTab.value = t })
-watch(activeTab, (t) => { if (t === 'briefs') loadMyMissions() })
+watch(activeTab, (t) => {
+  if (t === 'briefs') loadMyMissions()
+  router.push({ query: { tab: t } })
+})
 
 onMounted(async () => {
   await loadCategories()
