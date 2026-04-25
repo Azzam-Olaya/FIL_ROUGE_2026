@@ -13,8 +13,8 @@ class Portfolio extends Model {
     public function comments() { return $this->hasMany(PortfolioComment::class); }
     public function favorites() { return $this->hasMany(PortfolioFavorite::class); }
 
-    public function getLikesCountAttribute() { return $this->likes()->count(); }
-    public function getCommentsCountAttribute() { return $this->comments()->count(); }
+    public function getLikesCountAttribute() { return $this->attributes['likes_count'] ?? $this->likes()->count(); }
+    public function getCommentsCountAttribute() { return $this->attributes['comments_count'] ?? $this->comments()->count(); }
     public function getIsLikedAttribute() {
         $userId = auth()->id();
         return $userId ? $this->likes()->where('user_id', $userId)->exists() : false;
