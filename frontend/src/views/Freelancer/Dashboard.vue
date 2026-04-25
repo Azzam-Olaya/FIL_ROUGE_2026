@@ -83,16 +83,25 @@
             <button @click="showNewBriefModal = true" class="mt-4 text-primary text-sm font-bold hover:underline">Publier votre premier brief</button>
           </div>
           <div v-else class="grid grid-cols-1 gap-6">
-            <div v-for="b in myBriefs" :key="b.id" class="bg-white rounded-[2rem] border border-primary/5 p-4 md:p-6 shadow-sm">
+            <div v-for="b in myBriefs" :key="b.id" :id="'brief-' + b.id" 
+              class="bg-white rounded-[2rem] border border-primary/5 p-4 md:p-6 shadow-sm transition-all duration-500"
+              :class="route.query.briefId == b.id ? 'ring-2 ring-primary bg-primary/5 scale-[1.02]' : ''">
               <div class="flex flex-col sm:flex-row items-start justify-between gap-4 mb-3">
                 <div class="flex-1">
-                  <span class="text-[10px] font-bold uppercase tracking-widest text-white bg-primary px-3 py-1 rounded-full">{{ b.category?.name || 'Sans catégorie' }}</span>
+                  <div class="flex flex-wrap gap-2 mt-2">
+                    <span v-for="cat in b.categories" :key="cat.id" class="text-[10px] font-bold uppercase tracking-widest text-white bg-primary px-3 py-1 rounded-full">
+                      {{ cat.name }}
+                    </span>
+                    <span v-if="!b.categories?.length" class="text-[10px] font-bold uppercase tracking-widest text-white bg-primary px-3 py-1 rounded-full">
+                      {{ b.category?.name || 'Sans catégorie' }}
+                    </span>
+                  </div>
                   <h3 class="font-bold text-lg text-on-surface mt-2">{{ b.title }}</h3>
                   <p class="text-sm text-on-surface-variant mt-1 line-clamp-3">{{ b.description }}</p>
                 </div>
                 <div class="sm:text-right flex-shrink-0">
-                  <p class="font-black text-xl text-primary">{{ b.price }} DH</p>
-                  <p class="text-xs text-on-surface-variant mt-0.5">{{ b.duration }}</p>
+                  <p class="font-black text-xl text-primary">{{ b.price || 0 }} DH</p>
+                  <p class="text-xs text-on-surface-variant mt-0.5">{{ b.duration || 'Délai non spécifié' }}</p>
                 </div>
               </div>
               <div class="flex items-center gap-4 text-xs text-on-surface-variant pt-3 border-t border-primary/5">
@@ -180,12 +189,26 @@
                 class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary transition-colors resize-none" />
             </div>
             <div>
-              <label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-1">Catégorie *</label>
-              <select v-model="newBrief.category_id" required
-                class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary transition-colors">
-                <option value="">Sélectionner une catégorie</option>
-                <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
-              </select>
+              <label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-2">Choisir les catégories parentes *</label>
+              <div class="flex flex-wrap gap-2 mb-4">
+                <button type="button" v-for="c in rootCategories" :key="c.id" 
+                  @click="toggleParentCategory(c.id)"
+                  :class="newBrief.parent_ids.includes(c.id) ? 'bg-primary text-white shadow-lg shadow-primary/25' : 'bg-surface-container text-on-surface-variant border border-primary/10'"
+                  class="px-5 py-2 rounded-full text-xs font-bold transition-all hover:scale-105 active:scale-95">
+                  {{ c.name }}
+                </button>
+              </div>
+            </div>
+            <div v-if="modalSubCategories.length">
+              <label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-2">Choisir les compétences spécifiques (tags)</label>
+              <div class="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-1">
+                <button type="button" v-for="c in modalSubCategories" :key="c.id" 
+                  @click="toggleSubCategory(c.id)"
+                  :class="newBrief.category_ids.includes(c.id) ? 'bg-primary text-white' : 'bg-surface-container text-on-surface-variant border border-primary/10'"
+                  class="px-4 py-1.5 rounded-full text-xs font-bold transition-all hover:scale-105 active:scale-95">
+                  {{ c.name }}
+                </button>
+              </div>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -216,8 +239,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import TopNavBar      from '@/components/Common/TopNavBar.vue'
 import Sidebar        from '@/components/Freelancer/Sidebar.vue'
 import MissionCard    from '@/components/Freelancer/MissionCard.vue'
@@ -229,6 +252,7 @@ import api from '@/api/axios'
 
 const store        = useFreelancerStore()
 const route        = useRoute()
+const router       = useRouter()
 const activeTab    = ref(route.query.tab || 'dashboard')
 const sidebarOpen  = ref(false)
 
@@ -277,21 +301,53 @@ const loadMyBriefs = async () => {
 const showNewBriefModal = ref(false)
 const submittingBrief   = ref(false)
 const categories        = ref([])
-const newBrief = ref({ title: '', description: '', category_id: '', price: '', duration: '' })
+const newBrief = ref({ title: '', description: '', parent_ids: [], category_ids: [], price: '', duration: '' })
+
+const rootCategories = computed(() => categories.value.filter(c => !c.parent_id))
+const modalSubCategories = computed(() => {
+  if (!newBrief.value.parent_ids.length) return []
+  return categories.value.filter(c => newBrief.value.parent_ids.includes(c.parent_id))
+})
+
+const toggleParentCategory = (id) => {
+  const idx = newBrief.value.parent_ids.indexOf(id)
+  if (idx > -1) {
+    newBrief.value.parent_ids.splice(idx, 1)
+    const childrenIds = categories.value.filter(c => c.parent_id === id).map(c => c.id)
+    newBrief.value.category_ids = newBrief.value.category_ids.filter(cid => !childrenIds.includes(cid))
+  } else {
+    newBrief.value.parent_ids.push(id)
+  }
+}
+
+const toggleSubCategory = (id) => {
+  const idx = newBrief.value.category_ids.indexOf(id)
+  if (idx > -1) newBrief.value.category_ids.splice(idx, 1)
+  else newBrief.value.category_ids.push(id)
+}
 
 const loadCategories = async () => {
   try {
     const res = await api.get('/freelancer/categories')
-    categories.value = res.data.filter(c => !c.parent_id)
+    categories.value = res.data
   } catch { categories.value = [] }
 }
 
 const submitBrief = async () => {
+  if (!newBrief.value.parent_ids.length) {
+    alert('Veuillez sélectionner au moins une catégorie parente')
+    return
+  }
   submittingBrief.value = true
   try {
-    await api.post('/freelancer/briefs', newBrief.value)
+    const payload = {
+      ...newBrief.value,
+      category_id: newBrief.value.parent_ids[0],
+      category_ids: [...newBrief.value.parent_ids, ...newBrief.value.category_ids]
+    }
+    await api.post('/freelancer/briefs', payload)
     showNewBriefModal.value = false
-    newBrief.value = { title: '', description: '', category_id: '', price: '', duration: '' }
+    newBrief.value = { title: '', description: '', parent_ids: [], category_ids: [], price: '', duration: '' }
     activeTab.value = 'briefs'
     loadMyBriefs()
   } catch (e) {
@@ -303,7 +359,20 @@ const submitBrief = async () => {
 const handleTabEvent = (e) => { activeTab.value = e.detail }
 
 watch(() => route.query.tab, (t) => { if (t) activeTab.value = t })
-watch(activeTab, (t) => { if (t === 'briefs') loadMyBriefs() })
+watch(activeTab, (t) => {
+  if (t === 'briefs') loadMyBriefs()
+  // Sync URL with tab and clear briefId
+  router.push({ query: { tab: t } })
+})
+
+watch(() => route.query.briefId, (id) => {
+  if (id && activeTab.value === 'briefs') {
+    setTimeout(() => {
+      const el = document.getElementById(`brief-${id}`)
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 800)
+  }
+}, { immediate: true })
 
 onMounted(() => {
   store.startPolling()
