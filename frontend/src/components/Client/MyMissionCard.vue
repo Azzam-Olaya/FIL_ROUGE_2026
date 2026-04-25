@@ -48,12 +48,12 @@
     <!-- Counters bar -->
     <div class="px-6 py-2 flex items-center justify-between border-b border-primary/5 text-xs text-on-surface-variant">
       <div class="flex items-center gap-3">
-        <span class="flex items-center gap-1">
+        <button @click="toggleLikes" class="flex items-center gap-1 hover:text-primary transition-colors">
           <span class="w-4 h-4 rounded-full bg-secondary flex items-center justify-center">
             <span class="material-symbols-outlined text-white" style="font-size:10px;font-variation-settings:'FILL' 1">favorite</span>
           </span>
           {{ mission.likes_count || 0 }} j'aime
-        </span>
+        </button>
       </div>
       <div class="flex items-center gap-3">
         <button @click="toggleComments" class="hover:text-primary hover:underline transition-colors">
@@ -63,13 +63,40 @@
     </div>
 
     <!-- Action buttons -->
-    <div class="px-4 py-2 flex items-center gap-1 border-b border-primary/5">
+    <div class="px-4 py-2 flex items-center gap-2 border-b border-primary/5">
       <button @click="toggleComments"
         :class="showComments ? 'text-primary bg-primary/10' : 'text-on-surface-variant hover:bg-surface-container hover:text-primary'"
         class="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl transition-all font-semibold text-sm">
         <span class="material-symbols-outlined text-base">chat_bubble</span>
-        Voir les commentaires
+        Commentaires
       </button>
+      <button @click="toggleLikes"
+        :class="showLikes ? 'text-secondary bg-secondary/10' : 'text-on-surface-variant hover:bg-surface-container hover:text-secondary'"
+        class="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl transition-all font-semibold text-sm">
+        <span class="material-symbols-outlined text-base">favorite</span>
+        Favoris
+      </button>
+    </div>
+
+    <!-- Likes List Section -->
+    <div v-if="showLikes" class="px-6 py-4 bg-surface-container/30 border-b border-primary/5 animate-in">
+      <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-3 flex items-center gap-2">
+        <span class="material-symbols-outlined text-sm font-black">favorite</span>
+        Freelancers ayant aimé
+      </p>
+      <div v-if="loadingLikes" class="flex justify-center py-4">
+        <span class="material-symbols-outlined text-primary/30 animate-spin">progress_activity</span>
+      </div>
+      <div v-else-if="likesList.length" class="flex flex-wrap gap-2">
+        <div v-for="user in likesList" :key="user.id" 
+             class="flex items-center gap-2 bg-white border border-primary/10 pl-1 pr-3 py-1 rounded-full shadow-sm hover:border-primary/30 transition-colors">
+          <div class="w-6 h-6 rounded-full bg-secondary flex items-center justify-center text-white font-bold text-[9px]">
+            {{ initials(user.name) }}
+          </div>
+          <span class="text-xs font-bold text-on-surface">{{ user.name }}</span>
+        </div>
+      </div>
+      <p v-else class="text-center text-xs text-on-surface-variant py-4 italic">Aucun like pour le moment</p>
     </div>
 
     <!-- Comments section -->
@@ -146,10 +173,13 @@ const props = defineProps({ mission: { type: Object, required: true } })
 const store = useClientStore()
 
 const showComments     = ref(false)
+const showLikes        = ref(false)
 const showContactModal = ref(false)
 const expanded         = ref(false)
 const commentsList     = ref([])
+const likesList        = ref([])
 const loadingComments  = ref(false)
+const loadingLikes     = ref(false)
 const contactTarget    = ref(null)
 const contactMessage   = ref('')
 const sending          = ref(false)
@@ -158,12 +188,25 @@ const initials = (n) => n?.split(' ').map(x => x[0]).join('').toUpperCase().slic
 
 const toggleComments = async () => {
   showComments.value = !showComments.value
+  showLikes.value = false
   if (showComments.value && !commentsList.value.length) {
     loadingComments.value = true
     try {
-      const res = await api.get(`/client/briefs/${props.mission.id}/comments`)
+      const res = await api.get(`/client/missions/${props.mission.id}/comments`)
       commentsList.value = res.data
     } catch {} finally { loadingComments.value = false }
+  }
+}
+
+const toggleLikes = async () => {
+  showLikes.value = !showLikes.value
+  showComments.value = false
+  if (showLikes.value && !likesList.value.length) {
+    loadingLikes.value = true
+    try {
+      const res = await api.get(`/client/missions/${props.mission.id}/likes`)
+      likesList.value = res.data
+    } catch {} finally { loadingLikes.value = false }
   }
 }
 
