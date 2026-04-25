@@ -79,10 +79,10 @@
       </button>
       <!-- Favorite -->
       <button @click="toggleFavorite"
-        :class="store.isFavorited(brief.id) ? 'text-primary bg-primary/10' : 'text-on-surface-variant hover:bg-surface-container hover:text-primary'"
+        :class="(isClient ? store.isFavorited(brief.id) : store.isBriefFavorited(brief.id)) ? 'text-primary bg-primary/10' : 'text-on-surface-variant hover:bg-surface-container hover:text-primary'"
         class="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl transition-all font-semibold text-sm">
         <span class="material-symbols-outlined text-base"
-          :style="store.isFavorited(brief.id) ? `font-variation-settings:'FILL' 1` : ''">star</span>
+          :style="(isClient ? store.isFavorited(brief.id) : store.isBriefFavorited(brief.id)) ? `font-variation-settings:'FILL' 1` : ''">star</span>
         Favori
       </button>
       <!-- Contact -->
@@ -168,11 +168,16 @@
 
 <script setup>
 import { ref } from 'vue'
-import { useClientStore } from '@/stores/client'
+import { useClientStore }     from '@/stores/client'
+import { useFreelancerStore } from '@/stores/freelancer'
+import { useAuthStore }       from '@/stores/auth'
 import api from '@/api/axios'
 
 const props = defineProps({ brief: { type: Object, required: true } })
-const store = useClientStore()
+const auth      = useAuthStore()
+const isClient  = auth.user?.role?.name === 'client'
+const store     = isClient ? useClientStore() : useFreelancerStore()
+const apiPrefix = isClient ? '/client' : '/freelancer'
 
 const showComments     = ref(false)
 const showContactModal = ref(false)
@@ -187,12 +192,13 @@ const initials = (n) => n?.split(' ').map(x => x[0]).join('').toUpperCase().slic
 
 const toggleLike = async () => {
   store.toggleLike(props.brief)
-  try { await api.post(`/client/briefs/${props.brief.id}/like`) } catch {}
+  try { await api.post(`${apiPrefix}/briefs/${props.brief.id}/like`) } catch {}
 }
 
 const toggleFavorite = async () => {
-  store.toggleFavorite(props.brief)
-  try { await api.post(`/client/briefs/${props.brief.id}/favorite`) } catch {}
+  if (isClient) store.toggleFavorite(props.brief)
+  else store.toggleBriefFavorite(props.brief)
+  try { await api.post(`${apiPrefix}/briefs/${props.brief.id}/favorite`) } catch {}
 }
 
 const toggleComments = async () => {
@@ -200,7 +206,7 @@ const toggleComments = async () => {
   if (showComments.value && !commentsList.value.length) {
     loadingComments.value = true
     try {
-      const res = await api.get(`/client/briefs/${props.brief.id}/comments`)
+      const res = await api.get(`${apiPrefix}/briefs/${props.brief.id}/comments`)
       commentsList.value = res.data
     } catch {} finally { loadingComments.value = false }
   }
@@ -212,7 +218,7 @@ const addComment = async () => {
   newComment.value = ''
   commentsList.value.push({ user: { name: store.userName }, body: text })
   props.brief.comments = (props.brief.comments || 0) + 1
-  try { await api.post(`/client/briefs/${props.brief.id}/comment`, { body: text }) } catch {}
+  try { await api.post(`${apiPrefix}/briefs/${props.brief.id}/comment`, { body: text }) } catch {}
 }
 
 const sendContact = async () => {
