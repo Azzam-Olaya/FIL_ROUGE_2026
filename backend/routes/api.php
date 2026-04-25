@@ -34,6 +34,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/categories', [FreelancerController::class, 'getCategories']);
         Route::post('/missions', [ClientController::class, 'storeMission']);
         Route::get('/missions', [ClientController::class, 'getMyMissions']);
+        Route::get('/missions/{id}/comments', [ClientController::class, 'getMissionComments']);
+        Route::get('/missions/{id}/likes', [ClientController::class, 'getMissionLikes']);
         Route::get('/stats', [ClientController::class, 'getStats']);
         Route::get('/payments', [ClientController::class, 'getPayments']);
         Route::get('/briefs', [ClientController::class, 'getBriefs']);
@@ -41,6 +43,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/briefs/{id}/comment', [ClientController::class, 'addComment']);
         Route::get('/briefs/{id}/comments', [ClientController::class, 'getComments']);
         Route::post('/briefs/{id}/favorite', [ClientController::class, 'toggleFavorite']);
+        Route::get('/favorites', [ClientController::class, 'getMyFavorites']);
         Route::get('/notifications', [ClientController::class, 'getNotifications']);
         Route::post('/notifications/read', [ClientController::class, 'markAllRead']);
         Route::patch('/notifications/{id}/read', [ClientController::class, 'markOneRead']);
@@ -59,7 +62,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/briefs/{id}/favorite', [FreelancerController::class, 'toggleFavorite']);
         Route::get('/missions', [FreelancerController::class, 'getAvailableMissions']);
         Route::get('/missions/active', [FreelancerController::class, 'getActiveMissions']);
+        Route::get('/missions/favorites', [FreelancerController::class, 'getMyMissionFavorites']);
         Route::post('/missions/{id}/like', [FreelancerController::class, 'toggleMissionLike']);
+        Route::post('/missions/{id}/favorite', [FreelancerController::class, 'toggleMissionFavorite']);
         Route::post('/missions/{id}/comment', [FreelancerController::class, 'addMissionComment']);
         Route::get('/missions/{id}/comments', [FreelancerController::class, 'getMissionComments']);
         Route::get('/favorites', [FreelancerController::class, 'getMyFavorites']);
