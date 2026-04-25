@@ -35,9 +35,7 @@
             <div class="flex flex-col md:flex-row items-baseline justify-between mb-6 gap-2">
               <div>
                 <h2 class="font-headline text-2xl md:text-3xl font-bold text-on-surface">Missions des clients</h2>
-                <p class="text-sm text-on-surface-variant mt-1">
-                  {{ allMissions.length }} mission{{ allMissions.length !== 1 ? 's' : '' }} disponible{{ allMissions.length !== 1 ? 's' : '' }}
-                </p>
+                <p class="text-sm text-on-surface-variant mt-1">Trouvez votre prochain projet passionnant</p>
               </div>
               <div v-if="loading" class="flex items-center gap-2 text-on-surface-variant">
                 <span class="material-symbols-outlined text-sm animate-spin">progress_activity</span>
@@ -288,6 +286,7 @@ const sidebarOpen  = ref(false)
 // ── Missions (publiées par les clients) ─────────────────────────────────────
 const allMissions = ref([])
 const loading     = ref(false)
+const debounceTimer = ref(null)
 
 const loadMissions = async () => {
   loading.value = true
@@ -295,24 +294,19 @@ const loadMissions = async () => {
     const params = {}
     if (store.searchQuery)    params.search = store.searchQuery
     if (store.searchCategory) params.category_id = store.searchCategory
+    
     const res = await api.get('/freelancer/missions', { params })
     if (res.data) allMissions.value = res.data
   } catch {
-    allMissions.value = [
-      { id: 101, title: 'Design Logo Artisanat Moderne', description: 'Nous cherchons un designer pour concevoir un logo alliant les zelliges traditionnels et une typographie moderne pour notre nouvelle marque de vêtements.', budget: 2500, deadline: '10 Jours', categories: ['Design', 'Branding'], categorySlug: 'design', client: { id: 1, name: 'Boutique Atlas' }, likes: 12, comments: 3, favorites_count: 2, commentsList: [] },
-      { id: 102, title: 'Développement Site E-commerce', description: 'Mise en place d\'une boutique en ligne complète (frontend & backend) pour vendre de la poterie de Safi à l\'international.', budget: 15000, deadline: '1 Mois', categories: ['Dev', 'E-commerce'], categorySlug: 'dev', client: { id: 2, name: 'Poterie Safi Exp' }, likes: 45, comments: 8, favorites_count: 5, commentsList: [] },
-      { id: 103, title: 'Campagne Marketing Réseaux Sociaux', description: 'Besoin d\'un expert pour gérer la promotion de nos tapis berbères sur Instagram. Création de contenu et publicités ciblées.', budget: 5000, deadline: 'En continu', categories: ['Marketing', 'Ads'], categorySlug: 'marketing', client: { id: 3, name: 'Tissages du Haut' }, likes: 22, comments: 1, favorites_count: 1, commentsList: [] },
-      { id: 104, title: 'Application Mobile de Livraison', description: 'Nous recherchons un développeur Flutter/React Native pour une app de livraison spécialisée dans l\'artisanat lourd.', budget: 20000, deadline: '3 Mois', categories: ['Dev', 'Mobile'], categorySlug: 'dev', client: { id: 4, name: 'Atlas Deliver' }, likes: 56, comments: 12, favorites_count: 8, commentsList: [] },
-    ]
+    allMissions.value = []
   } finally { loading.value = false }
 }
 
-let debounceTimer = null
 watch(() => store.searchQuery, () => {
-  clearTimeout(debounceTimer)
-  debounceTimer = setTimeout(loadMissions, 400)
+  clearTimeout(debounceTimer.value)
+  debounceTimer.value = setTimeout(loadMissions, 400)
 })
-watch(() => store.searchCategory, () => loadMissions())
+watch(() => store.searchCategory, loadMissions)
 
 // ── Mes Briefs (publiés par le freelancer) ──────────────────────────────────
 const myBriefs    = ref([])
