@@ -51,6 +51,11 @@ class Mission extends Model
         return $this->hasMany(MissionLike::class);
     }
 
+    public function favorites()
+    {
+        return $this->hasMany(MissionFavorite::class);
+    }
+
     public function comments()
     {
         return $this->hasMany(MissionComment::class);
