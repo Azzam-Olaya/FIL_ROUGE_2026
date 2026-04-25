@@ -10,24 +10,31 @@
       </button>
     </div>
     <select v-model="localCategory" @change="updateSearch"
-      class="bg-surface-container-highest/50 border-none rounded-full py-2 px-3 text-xs focus:ring-2 focus:ring-primary/20 transition-all font-medium text-on-surface">
+      class="bg-surface-container-highest/50 border-none rounded-full py-2 px-3 text-xs focus:ring-2 focus:ring-primary/20 transition-all font-medium text-on-surface max-w-[150px]">
       <option value="">Toutes catégories</option>
-      <option value="design">Design</option>
-      <option value="dev">Développement</option>
-      <option value="marketing">Marketing</option>
-      <option value="construction">Construction</option>
-      <option value="other">Autres</option>
+      <option v-for="c in rootCategories" :key="c.id" :value="c.id">{{ c.name }}</option>
     </select>
   </div>
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import { useFreelancerStore } from '@/stores/freelancer'
+import api from '@/api/axios'
 
 const store         = useFreelancerStore()
 const localQuery    = ref(store.searchQuery)
 const localCategory = ref(store.searchCategory)
+const categories    = ref([])
+
+const rootCategories = computed(() => categories.value.filter(c => !c.parent_id))
+
+const loadCategories = async () => {
+  try {
+    const res = await api.get('/freelancer/categories')
+    categories.value = res.data
+  } catch { categories.value = [] }
+}
 
 const updateSearch = () => {
   store.searchQuery    = localQuery.value
@@ -40,6 +47,8 @@ const clear = () => {
   store.searchQuery    = ''
   store.searchCategory = ''
 }
+
+onMounted(loadCategories)
 
 watch(() => store.searchQuery,    v => { localQuery.value    = v })
 watch(() => store.searchCategory, v => { localCategory.value = v })
