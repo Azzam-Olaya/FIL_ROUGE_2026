@@ -57,29 +57,45 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import axios from 'axios'
+import api from '@/api/axios'
 
 const props     = defineProps({ role: { type: String, default: 'freelancer' } })
 const contracts = ref([])
 const loading   = ref(false)
-const headers   = computed(() => ({ Authorization: `Bearer ${localStorage.getItem('token')}` }))
 
 const activeCount    = computed(() => contracts.value.filter(c => c.status === 'active').length)
 const completedCount = computed(() => contracts.value.filter(c => c.status === 'completed').length)
-const endpoint       = computed(() => props.role === 'freelancer' ? 'http://localhost:8000/api/contracts/freelancer' : 'http://localhost:8000/api/contracts/client')
+const endpoint       = computed(() => props.role === 'freelancer' ? '/contracts/freelancer' : '/contracts/client')
 
 const load = async () => {
   loading.value = true
-  try { const res = await axios.get(endpoint.value, { headers: headers.value }); contracts.value = res.data }
-  catch { contracts.value = [] } finally { loading.value = false }
+  try {
+    const res = await api.get(endpoint.value)
+    contracts.value = res.data
+  } catch {
+    contracts.value = []
+  } finally {
+    loading.value = false
+  }
 }
 
 const complete = async (c) => {
-  try { await axios.post(`http://localhost:8000/api/contracts/${c.id}/complete`, {}, { headers: headers.value }); c.status = 'completed' } catch { alert('Erreur') }
+  try {
+    await api.post(`/contracts/${c.id}/complete`, {})
+    c.status = 'completed'
+  } catch {
+    alert('Erreur')
+  }
 }
+
 const refund = async (c) => {
   if (!confirm('Confirmer la demande de remboursement ?')) return
-  try { await axios.post(`http://localhost:8000/api/contracts/${c.id}/refund`, {}, { headers: headers.value }); c.status = 'refunded' } catch { alert('Erreur') }
+  try {
+    await api.post(`/contracts/${c.id}/refund`, {})
+    c.status = 'refunded'
+  } catch {
+    alert('Erreur')
+  }
 }
 
 const statusClass = (s) => ({ active: 'bg-primary/10 text-primary', completed: 'bg-green-100 text-green-700', refunded: 'bg-yellow-100 text-yellow-700' }[s] || 'bg-surface-container text-on-surface-variant')
