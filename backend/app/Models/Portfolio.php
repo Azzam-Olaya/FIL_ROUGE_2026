@@ -2,7 +2,7 @@
 namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 class Portfolio extends Model {
-    protected $fillable = ['freelancer_id', 'category_id', 'title', 'description', 'images'];
+    protected $fillable = ['freelancer_id', 'category_id', 'title', 'description', 'images', 'price', 'duration'];
     protected $casts = ['images' => 'array'];
     protected $appends = ['likes_count', 'comments_count', 'is_liked', 'is_favorited'];
 
