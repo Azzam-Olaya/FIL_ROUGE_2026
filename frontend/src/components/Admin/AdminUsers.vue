@@ -1,13 +1,13 @@
 <template>
   <div class="space-y-6">
     <!-- Filtres -->
-    <div class="flex gap-4">
-      <select v-model="filters.role" @change="loadUsers" class="border p-2 rounded">
+    <div class="flex flex-col sm:flex-row gap-4">
+      <select v-model="filters.role" @change="loadUsers" class="border p-2 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none">
         <option value="">Tous les rôles</option>
         <option value="client">Client</option>
         <option value="freelancer">Freelancer</option>
       </select>
-      <select v-model="filters.status" @change="loadUsers" class="border p-2 rounded">
+      <select v-model="filters.status" @change="loadUsers" class="border p-2 rounded-xl text-sm focus:ring-2 focus:ring-primary/20 outline-none">
         <option value="">Tous les statuts</option>
         <option value="pending">En attente</option>
         <option value="verified">Vérifié</option>
@@ -17,134 +17,152 @@
     </div>
 
     <!-- Liste des utilisateurs -->
-    <div class="bg-white shadow-md rounded-lg overflow-hidden">
-      <table class="min-w-full">
-        <thead class="bg-gray-50">
-          <tr>
-            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nom</th>
-            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rôle</th>
-            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">N° CIN/Passeport</th>
-            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Lieu de naissance</th>
-            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Document</th>
-            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Inscrit le</th>
-            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Statut</th>
-            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-          </tr>
-        </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
-          <tr v-for="user in users" :key="user.id">
-            <td class="px-4 py-4 whitespace-nowrap">{{ user.name }}</td>
-            <td class="px-4 py-4 whitespace-nowrap">{{ user.email }}</td>
-            <td class="px-4 py-4 whitespace-nowrap">{{ user.role_name }}</td>
-            <td class="px-4 py-4 whitespace-nowrap">{{ user.id_number || '—' }}</td>
-            <td class="px-4 py-4 whitespace-nowrap">{{ user.birthplace || '—' }}</td>
-            <td class="px-4 py-4 whitespace-nowrap">
-              <a v-if="user.id_document_path"
-                 :href="`http://localhost:8000/storage/${user.id_document_path}`"
-                 target="_blank"
-                 class="text-blue-600 underline text-sm">Voir document</a>
-              <span v-else class="text-gray-400 text-sm">Aucun</span>
-            </td>
-            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-600">
-              {{ formatDate(user.created_at) }}
-              <span v-if="isNew(user.created_at)" class="ml-1 bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Nouveau</span>
-            </td>
-            <td class="px-4 py-4 whitespace-nowrap">
-              <span :class="getStatusClass(user.verification_status)" class="px-2 py-1 rounded-full text-xs font-bold">
-                {{ getStatusText(user.verification_status) }}
-              </span>
-            </td>
-            <td class="px-4 py-4 whitespace-nowrap space-x-2">
-              <button v-if="user.verification_status === 'pending'"
-                      @click="approveUser(user.id)"
-                      class="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600">
-                Approuver
-              </button>
-              <button v-if="user.verification_status === 'pending'"
-                      @click="rejectUser(user.id)"
-                      class="bg-orange-500 text-white px-3 py-1 rounded text-sm hover:bg-orange-600">
-                Rejeter
-              </button>
-              <button v-if="user.verification_status !== 'banned'"
-                      @click="banUser(user.id)"
-                      class="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600">
-                Bannir
-              </button>
-            </td>
-          </tr>
-          <tr v-if="users.length === 0">
-            <td colspan="9" class="px-4 py-8 text-center text-gray-400">Aucun utilisateur trouvé.</td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="bg-white shadow-xl shadow-primary/5 rounded-[2rem] border border-primary/5 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="min-w-full">
+          <thead class="bg-gray-50 border-b border-gray-100">
+            <tr>
+              <th class="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Nom</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Compte</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">ID / Document</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Date</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Statut</th>
+              <th class="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-widest">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-50">
+            <tr v-for="user in users" :key="user.id" class="hover:bg-gray-50/50 transition-colors">
+              <td class="px-6 py-4">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs uppercase">
+                    {{ user.name.charAt(0) }}
+                  </div>
+                  <span class="font-bold text-sm text-on-surface">{{ user.name }}</span>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex flex-col">
+                  <span class="text-sm text-on-surface-variant">{{ user.email }}</span>
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-primary">{{ user.role_name }}</span>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex flex-col gap-1">
+                  <span class="text-xs font-medium text-on-surface">No: {{ user.id_number || '—' }}</span>
+                  <a v-if="user.id_document_path"
+                     :href="`${BASE_URL}/storage/${user.id_document_path}`"
+                     target="_blank"
+                     class="text-primary hover:underline text-[10px] font-bold flex items-center gap-1">
+                    <span class="material-symbols-outlined text-xs">file_open</span> Voir document
+                  </a>
+                </div>
+              </td>
+              <td class="px-6 py-4 text-sm text-gray-600">
+                <div class="flex flex-col">
+                  <span>{{ formatDate(user.created_at) }}</span>
+                  <span v-if="isNew(user.created_at)" class="text-[8px] text-primary font-black uppercase tracking-widest mt-1">Nouveau</span>
+                </div>
+              </td>
+              <td class="px-6 py-4">
+                <span :class="getStatusClass(user.verification_status)" class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+                  {{ getStatusText(user.verification_status) }}
+                </span>
+              </td>
+              <td class="px-6 py-4 text-right">
+                <div class="flex justify-end gap-2">
+                  <button v-if="user.verification_status === 'pending'"
+                          @click="approveUser(user.id)"
+                          title="Approuver"
+                          class="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors">
+                    <span class="material-symbols-outlined">check_circle</span>
+                  </button>
+                  <button v-if="user.verification_status === 'pending'"
+                          @click="rejectUser(user.id)"
+                          title="Rejeter"
+                          class="p-2 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors">
+                    <span class="material-symbols-outlined">cancel</span>
+                  </button>
+                  <button v-if="user.verification_status !== 'banned'"
+                          @click="banUser(user.id)"
+                          title="Bannir"
+                          class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                    <span class="material-symbols-outlined">block</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr v-if="users.length === 0">
+              <td colspan="6" class="px-6 py-12 text-center text-gray-400 italic text-sm">
+                Aucun utilisateur trouvé.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import axios from 'axios';
+import { ref, onMounted } from 'vue'
+import api from '@/api/axios'
 
-const users = ref([]);
-const filters = ref({ role: '', status: '' });
-
-const getToken = () => localStorage.getItem('token');
+const users = ref([])
+const filters = ref({ role: '', status: '' })
+const BASE_URL = 'http://localhost:8000' // Keeping it as it's used for links
 
 const loadUsers = async () => {
   try {
-    const params = {};
-    if (filters.value.role) params.role = filters.value.role;
-    if (filters.value.status) params.status = filters.value.status;
+    const params = {}
+    if (filters.value.role)   params.role   = filters.value.role
+    if (filters.value.status) params.status = filters.value.status
 
-    const response = await axios.get('http://localhost:8000/api/admin/users', {
-      headers: { Authorization: `Bearer ${getToken()}` },
-      params,
-    });
-    users.value = response.data;
+    const response = await api.get('/admin/users', { params })
+    users.value = response.data
   } catch {
-    alert('Erreur lors du chargement des utilisateurs');
+    console.error('Erreur lors du chargement des utilisateurs')
   }
-};
+}
 
 const approveUser = async (id) => {
-  await axios.post(`http://localhost:8000/api/admin/users/${id}/approve`, {}, {
-    headers: { Authorization: `Bearer ${getToken()}` },
-  });
-  loadUsers();
-};
+  try {
+    await api.post(`/admin/users/${id}/approve`)
+    loadUsers()
+  } catch (e) { alert(e.response?.data?.message || 'Erreur') }
+}
 
 const rejectUser = async (id) => {
-  await axios.post(`http://localhost:8000/api/admin/users/${id}/reject`, {}, {
-    headers: { Authorization: `Bearer ${getToken()}` },
-  });
-  loadUsers();
-};
+  try {
+    await api.post(`/admin/users/${id}/reject`)
+    loadUsers()
+  } catch (e) { alert(e.response?.data?.message || 'Erreur') }
+}
 
 const banUser = async (id) => {
-  await axios.post(`http://localhost:8000/api/admin/users/${id}/ban`, {}, {
-    headers: { Authorization: `Bearer ${getToken()}` },
-  });
-  loadUsers();
-};
+  try {
+    if (confirm('Voulez-vous vraiment bannir cet utilisateur ?')) {
+      await api.post(`/admin/users/${id}/ban`)
+      loadUsers()
+    }
+  } catch (e) { alert(e.response?.data?.message || 'Erreur') }
+}
 
 const getStatusClass = (status) => ({
-  pending: 'bg-yellow-100 text-yellow-800',
+  pending:  'bg-yellow-100 text-yellow-800',
   verified: 'bg-green-100 text-green-800',
   rejected: 'bg-orange-100 text-orange-800',
-  banned: 'bg-red-100 text-red-800',
-}[status] || 'bg-gray-100 text-gray-800');
+  banned:   'bg-red-100 text-red-800',
+}[status] || 'bg-gray-100 text-gray-800')
 
 const getStatusText = (status) => ({
-  pending: 'En attente',
+  pending:  'En attente',
   verified: 'Vérifié',
   rejected: 'Rejeté',
-  banned: 'Banni',
-}[status] || status);
+  banned:   'Banni',
+}[status] || status)
 
-const formatDate = (date) => new Date(date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+const formatDate = (date) => new Date(date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
+const isNew = (date) => (Date.now() - new Date(date).getTime()) < 48 * 60 * 60 * 1000
 
-const isNew = (date) => (Date.now() - new Date(date).getTime()) < 48 * 60 * 60 * 1000;
-
-onMounted(loadUsers);
+onMounted(loadUsers)
 </script>
