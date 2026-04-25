@@ -32,36 +32,14 @@
             </button>
           </header>
 
-          <!-- Briefs Info / Summary -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div class="bg-white p-6 rounded-[2rem] border border-primary/5 shadow-sm hover:shadow-md transition-shadow">
-              <div class="flex items-center gap-3 mb-2">
-                <div class="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-                  <span class="material-symbols-outlined">explore</span>
-                </div>
-                <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Exploration</p>
-              </div>
-              <p class="text-3xl font-black text-on-surface">{{ briefs.length }} <span class="text-xs font-medium text-on-surface-variant uppercase ml-1">Briefs dispo.</span></p>
+          <!-- Brief feed header -->
+          <div class="flex items-center justify-between gap-4">
+            <div>
+              <h2 class="font-headline font-bold text-xl text-on-surface">Flux de Briefs</h2>
+              <p class="text-on-surface-variant text-xs mt-1">Explorez les derniers talents disponibles</p>
             </div>
-
-            <div class="bg-white p-6 rounded-[2rem] border border-primary/5 shadow-sm hover:shadow-md transition-shadow">
-              <div class="flex items-center gap-3 mb-2">
-                <div class="w-10 h-10 rounded-2xl bg-secondary/10 flex items-center justify-center text-secondary">
-                  <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">favorite</span>
-                </div>
-                <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Favoris</p>
-              </div>
-              <p class="text-3xl font-black text-on-surface">{{ store.favoritedBriefs.length }} <span class="text-xs font-medium text-on-surface-variant uppercase ml-1">Enregistrés</span></p>
-            </div>
-
-            <div class="bg-white p-6 rounded-[2rem] border border-primary/5 shadow-sm hover:shadow-md transition-shadow hidden lg:block">
-              <div class="flex items-center gap-3 mb-2">
-                <div class="w-10 h-10 rounded-2xl bg-yellow-100 flex items-center justify-center text-yellow-700">
-                  <span class="material-symbols-outlined">trending_up</span>
-                </div>
-                <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Tendance</p>
-              </div>
-              <p class="text-3xl font-black text-on-surface">Digital <span class="text-xs font-medium text-on-surface-variant uppercase ml-1">Demande forte</span></p>
+            <div class="text-xs font-bold text-primary bg-primary/10 px-4 py-2 rounded-full">
+              {{ briefs.length }} Briefs dispo.
             </div>
           </div>
 
@@ -136,13 +114,19 @@
               </div>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div class="bg-surface-container rounded-2xl p-4">
-                <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Missions publiées</p>
+              <div class="bg-surface-container rounded-2xl p-4 border border-primary/5">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="material-symbols-outlined text-primary text-sm">work</span>
+                  <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Missions publiées</p>
+                </div>
                 <p class="font-black text-2xl text-primary">{{ myMissions.length }}</p>
               </div>
-              <div class="bg-surface-container rounded-2xl p-4">
-                <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Briefs favoris</p>
-                <p class="font-black text-2xl text-primary">{{ store.favoritedBriefs.length }}</p>
+              <div class="bg-surface-container rounded-2xl p-4 border border-primary/5">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="material-symbols-outlined text-secondary text-sm" style="font-variation-settings:'FILL' 1">favorite</span>
+                  <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Briefs favoris</p>
+                </div>
+                <p class="font-black text-2xl text-secondary">{{ store.favoritedBriefs.length }}</p>
               </div>
             </div>
           </div>
@@ -369,6 +353,7 @@ watch(activeTab, (t) => {
 onMounted(async () => {
   await loadCategories()
   await loadBriefs()
+  store.fetchFavorites()
   loadMyMissions()
   window.addEventListener('client-tab', handleTabEvent)
   window.addEventListener('open-conversation', handleOpenConv)
