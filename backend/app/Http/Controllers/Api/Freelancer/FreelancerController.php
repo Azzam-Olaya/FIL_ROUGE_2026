@@ -8,6 +8,7 @@ use App\Models\PortfolioLike;
 use App\Models\PortfolioFavorite;
 use App\Models\PortfolioComment;
 use App\Models\Contract;
+use App\Models\MissionFavorite;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
@@ -89,6 +90,18 @@ class FreelancerController extends Controller
         return response()->json(['liked' => true]);
     }
 
+    public function toggleMissionFavorite(Request $request, $id)
+    {
+        $this->ensureTablesExist();
+        $existing = MissionFavorite::where(['mission_id' => $id, 'user_id' => $request->user()->id])->first();
+        if ($existing) {
+            $existing->delete();
+            return response()->json(['favorited' => false]);
+        }
+        MissionFavorite::create(['mission_id' => $id, 'user_id' => $request->user()->id]);
+        return response()->json(['favorited' => true]);
+    }
+
     public function addMissionComment(Request $request, $id)
     {
         $request->validate(['body' => 'required|string|max:500']);
@@ -125,6 +138,7 @@ class FreelancerController extends Controller
     {
         return response()->json(
             Portfolio::with(['freelancer', 'categories', 'comments.user'])
+                ->withCount(['likes', 'comments'])
                 ->latest()->get()
         );
     }
@@ -132,7 +146,10 @@ class FreelancerController extends Controller
     public function getMyBriefs(Request $request)
     {
         return response()->json(
-            $request->user()->portfolios()->with('categories')->latest()->get()
+            $request->user()->portfolios()
+                ->with(['categories', 'likes.user'])
+                ->withCount(['likes', 'comments'])
+                ->latest()->get()
         );
     }
 
@@ -222,6 +239,16 @@ class FreelancerController extends Controller
                 ->with(['portfolio.category', 'portfolio.freelancer'])
                 ->get()
                 ->pluck('portfolio')
+        );
+    }
+
+    public function getMyMissionFavorites(Request $request)
+    {
+        return response()->json(
+            MissionFavorite::where('user_id', $request->user()->id)
+                ->with(['mission.category', 'mission.client'])
+                ->get()
+                ->pluck('mission')
         );
     }
 
@@ -393,6 +420,9 @@ class FreelancerController extends Controller
             }
             if (!\Illuminate\Support\Facades\Schema::hasColumn('portfolios', 'duration')) {
                 \Illuminate\Support\Facades\DB::statement('ALTER TABLE portfolios ADD COLUMN duration VARCHAR(100) NULL');
+            }
+            if (!\Illuminate\Support\Facades\Schema::hasTable('mission_favorites')) {
+                \Illuminate\Support\Facades\DB::statement("CREATE TABLE mission_favorites (id SERIAL PRIMARY KEY, mission_id BIGINT NOT NULL REFERENCES missions(id) ON DELETE CASCADE, user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE, created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL, UNIQUE(mission_id, user_id))");
             }
         } catch (\Exception $e) {}
     }
