@@ -10,32 +10,50 @@ class ClientController extends Controller
 {
     public function storeMission(Request $request)
     {
-        $request->validate([
-            'category_id' => 'required|exists:categories,id',
-            'title'       => 'required|string|max:255',
-            'description' => 'required|string',
-            'budget'      => 'required|numeric|min:0',
-            'deadline'    => 'required|date|after:today',
-        ]);
+        $this->ensureTablesExist();
+        try {
+            $request->validate([
+                'category_id'  => 'required|exists:categories,id',
+                'category_ids' => 'nullable|array',
+                'category_ids.*' => 'exists:categories,id',
+                'title'        => 'required|string|max:255',
+                'description'  => 'required|string',
+                'budget'       => 'required|numeric|min:0',
+                'deadline'     => 'required|date|after:today',
+            ]);
 
-        $mission = \App\Models\Mission::create([
-            'client_id'   => $request->user()->id,
-            'category_id' => $request->category_id,
-            'title'       => $request->title,
-            'description' => $request->description,
-            'budget'      => $request->budget,
-            'deadline'    => $request->deadline,
-            'status'      => 'open',
-        ]);
+            $mission = \App\Models\Mission::create([
+                'client_id'   => $request->user()->id,
+                'category_id' => $request->category_id,
+                'title'       => $request->title,
+                'description' => $request->description,
+                'budget'      => $request->budget,
+                'deadline'    => $request->deadline,
+                'status'      => 'open',
+            ]);
 
-        return response()->json($mission, 201);
+            if ($request->category_ids) {
+                $mission->categories()->sync($request->category_ids);
+            }
+
+            return response()->json($mission->load('categories'), 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function getMyMissions(Request $request)
     {
-        return response()->json(
-            $request->user()->missions()->with('category')->get()
-        );
+        $this->ensureTablesExist();
+        try {
+            return response()->json(
+                $request->user()->missions()->with(['category', 'categories'])->get()
+            );
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 
     public function getNotifications(Request $request)
@@ -74,6 +92,8 @@ class ClientController extends Controller
                     'category'    => $b->category?->name,
                     'freelancerName' => $b->freelancer?->name,
                     'freelancerId'   => $b->freelancer_id,
+                    'price'       => $b->price,
+                    'timeline'    => $b->duration,
                     'likes'       => $b->likes->count(),
                     'comments'    => $b->comments->count(),
                     'commentList' => $b->comments->map(fn($c) => ['id' => $c->id, 'author' => $c->user?->name, 'text' => $c->body]),
@@ -156,5 +176,23 @@ class ClientController extends Controller
             'open_missions'   => \App\Models\Mission::where('client_id', $user->id)->where('status', 'open')->count(),
             'balance'         => $user->balance,
         ]);
+    }
+
+    private function ensureTablesExist()
+    {
+        try {
+            if (!\Illuminate\Support\Facades\Schema::hasTable('mission_category')) {
+                \Illuminate\Support\Facades\DB::statement('CREATE TABLE mission_category (mission_id BIGINT NOT NULL REFERENCES missions(id) ON DELETE CASCADE, category_id BIGINT NOT NULL REFERENCES categories(id) ON DELETE CASCADE, PRIMARY KEY (mission_id, category_id))');
+            }
+            if (!\Illuminate\Support\Facades\Schema::hasTable('mission_comments')) {
+                \Illuminate\Support\Facades\DB::statement("CREATE TABLE mission_comments (id SERIAL PRIMARY KEY, mission_id BIGINT NOT NULL REFERENCES missions(id) ON DELETE CASCADE, user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE, body TEXT NOT NULL, created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL)");
+            }
+            if (!\Illuminate\Support\Facades\Schema::hasColumn('portfolios', 'price')) {
+                \Illuminate\Support\Facades\DB::statement('ALTER TABLE portfolios ADD COLUMN price DECIMAL(10,2) NULL');
+            }
+            if (!\Illuminate\Support\Facades\Schema::hasColumn('portfolios', 'duration')) {
+                \Illuminate\Support\Facades\DB::statement('ALTER TABLE portfolios ADD COLUMN duration VARCHAR(100) NULL');
+            }
+        } catch (\Exception $e) {}
     }
 }
