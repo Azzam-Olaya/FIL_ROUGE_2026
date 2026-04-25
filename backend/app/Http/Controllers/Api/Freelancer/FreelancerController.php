@@ -8,7 +8,11 @@ use App\Models\PortfolioLike;
 use App\Models\PortfolioFavorite;
 use App\Models\PortfolioComment;
 use App\Models\Contract;
+use App\Models\Mission;
+use App\Models\MissionLike;
+use App\Models\MissionComment;
 use App\Models\MissionFavorite;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
@@ -129,9 +133,10 @@ class FreelancerController extends Controller
     public function getMissionComments($id)
     {
         return response()->json(
-            \App\Models\MissionComment::where('mission_id', $id)->with('user.role')->latest()->get()
+            MissionComment::where('mission_id', $id)->with('user.role')->latest()->get()
         );
     }
+
 
     // Briefs (portfolios)
     public function getBriefs()
@@ -366,43 +371,12 @@ class FreelancerController extends Controller
         return response()->json(Category::all());
     }
 
-    // Notifications (likes + comments sur mes briefs)
+    // Notifications
     public function getNotifications(Request $request)
     {
-        $this->ensureTablesExist();
-        $userId = $request->user()->id;
-        $myBriefIds = Portfolio::where('freelancer_id', $userId)->pluck('id');
-
-        $likes = PortfolioLike::whereIn('portfolio_id', $myBriefIds)
-            ->where('user_id', '!=', $userId)
-            ->with(['user', 'portfolio'])
-            ->latest()->take(10)->get()
-            ->map(fn($l) => [
-                'id'           => 'like_' . $l->id,
-                'portfolio_id' => $l->portfolio_id,
-                'type'         => 'like',
-                'title'        => '❤️ Nouveau like',
-                'message'      => $l->user->name . ' a aimé votre brief "' . $l->portfolio->title . '"',
-                'created_at'   => $l->created_at,
-                'read'         => false
-            ]);
-
-        $comments = PortfolioComment::whereIn('portfolio_id', $myBriefIds)
-            ->where('user_id', '!=', $userId)
-            ->with(['user', 'portfolio'])
-            ->latest()->take(10)->get()
-            ->map(fn($c) => [
-                'id'           => 'comment_' . $c->id,
-                'portfolio_id' => $c->portfolio_id,
-                'type'         => 'comment',
-                'title'        => '💬 Nouveau commentaire',
-                'message'      => $c->user->name . ' : "' . \Str::limit($c->body, 50) . '" sur "' . $c->portfolio->title . '"',
-                'created_at'   => $c->created_at,
-                'read'         => false
-            ]);
-
         return response()->json(
-            $likes->concat($comments)->sortByDesc('created_at')->values()
+            Notification::where('user_id', $request->user()->id)
+                ->latest()->take(30)->get()
         );
     }
 
