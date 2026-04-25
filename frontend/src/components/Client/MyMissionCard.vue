@@ -5,8 +5,9 @@
     <div class="flex items-start justify-between gap-4 p-6 pb-4">
       <div class="flex-1">
         <div class="flex items-center gap-2 mb-2">
-          <span class="text-[10px] font-bold uppercase tracking-widest text-white bg-primary px-3 py-1 rounded-full">
-            {{ mission.category?.name || 'Sans catégorie' }}
+          <span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant bg-surface-container px-3 py-1 rounded-full flex items-center gap-1">
+            <span class="material-symbols-outlined text-xs" style="font-size: 14px">schedule</span>
+            {{ new Date(mission.created_at).toLocaleDateString('fr-FR') }}
           </span>
           <span :class="statusClass(mission.status)" class="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full">
             {{ statusLabel(mission.status) }}
@@ -25,6 +26,15 @@
         <p class="font-black text-xl text-primary">{{ mission.budget }} DH</p>
         <p class="text-[10px] text-on-surface-variant font-medium">Budget</p>
       </div>
+    </div>
+
+    <!-- Categories pills (Languages/Skills) -->
+    <div v-if="mission.categories?.length" class="px-6 pb-3 flex flex-wrap gap-2">
+      <span v-for="cat in mission.categories" :key="cat.id"
+        class="text-[10px] font-bold text-secondary bg-secondary/10 px-3 py-1.5 rounded-lg flex items-center gap-1">
+        <span class="material-symbols-outlined" style="font-size: 12px">terminal</span>
+        {{ cat.name }}
+      </span>
     </div>
 
     <!-- Meta: deadline -->
@@ -130,7 +140,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useClientStore } from '@/stores/client'
-import axios from 'axios'
+import api from '@/api/axios'
 
 const props = defineProps({ mission: { type: Object, required: true } })
 const store = useClientStore()
@@ -151,7 +161,7 @@ const toggleComments = async () => {
   if (showComments.value && !commentsList.value.length) {
     loadingComments.value = true
     try {
-      const res = await axios.get(`http://localhost:8000/api/client/briefs/${props.mission.id}/comments`, { headers: store.authHeaders })
+      const res = await api.get(`/client/briefs/${props.mission.id}/comments`)
       commentsList.value = res.data
     } catch {} finally { loadingComments.value = false }
   }
@@ -167,10 +177,10 @@ const sendContact = async () => {
   if (!contactMessage.value.trim() || !contactTarget.value?.user?.id) return
   sending.value = true
   try {
-    await axios.post('http://localhost:8000/api/messages', {
+    await api.post('/messages', {
       receiver_id: contactTarget.value.user.id,
       content: contactMessage.value,
-    }, { headers: store.authHeaders })
+    })
     showContactModal.value = false
     contactMessage.value   = ''
     window.dispatchEvent(new CustomEvent('client-tab', { detail: 'messages' }))
