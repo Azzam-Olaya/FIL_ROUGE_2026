@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\Client;
 
 use App\Http\Controllers\Controller;
+use App\Models\PortfolioFavorite;
+use App\Models\MissionFavorite;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -61,6 +63,26 @@ class ClientController extends Controller
         return response()->json(
             \App\Models\Notification::where('user_id', $request->user()->id)
                 ->latest()->take(30)->get()
+        );
+    }
+
+    public function getMyFavorites(Request $request)
+    {
+        return response()->json(
+            PortfolioFavorite::where('user_id', $request->user()->id)
+                ->with(['portfolio.category', 'portfolio.freelancer'])
+                ->get()
+                ->pluck('portfolio')
+        );
+    }
+
+    public function getMyMissionFavorites(Request $request)
+    {
+        return response()->json(
+            MissionFavorite::where('user_id', $request->user()->id)
+                ->with(['mission.category', 'mission.client'])
+                ->get()
+                ->pluck('mission')
         );
     }
 
