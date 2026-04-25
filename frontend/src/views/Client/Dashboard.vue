@@ -32,14 +32,26 @@
             </button>
           </header>
 
-          <!-- Brief feed header -->
-          <div class="flex items-center justify-between gap-4">
-            <div>
-              <h2 class="font-headline font-bold text-xl text-on-surface">Flux de Briefs</h2>
-              <p class="text-on-surface-variant text-xs mt-1">Explorez les derniers talents disponibles</p>
-            </div>
-            <div class="text-xs font-bold text-primary bg-primary/10 px-4 py-2 rounded-full">
-              {{ briefs.length }} Briefs dispo.
+          <!-- Brief feed filters -->
+          <div class="bg-white rounded-[2rem] border border-primary/10 p-6 shadow-sm space-y-4">
+            <div class="flex flex-col md:flex-row gap-4">
+              <div class="flex-1 relative">
+                <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+                <input v-model="filters.search" placeholder="Rechercher un brief..." 
+                  class="w-full pl-12 pr-4 py-3 bg-surface-container border border-primary/5 rounded-2xl text-sm focus:outline-none focus:border-primary transition-all" />
+              </div>
+              <div class="flex gap-4">
+                <select v-model="filters.category_id" 
+                  class="bg-surface-container border border-primary/5 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-primary transition-all min-w-[160px]">
+                  <option :value="null">Toutes catégories</option>
+                  <option v-for="c in rootCategories" :key="c.id" :value="c.id">{{ c.name }}</option>
+                </select>
+                <select v-if="subCategories.length" v-model="filters.sub_category_id"
+                  class="bg-surface-container border border-primary/5 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-primary transition-all min-w-[160px]">
+                  <option :value="null">Toutes spécialités</option>
+                  <option v-for="c in subCategories" :key="c.id" :value="c.id">{{ c.name }}</option>
+                </select>
+              </div>
             </div>
           </div>
 
@@ -233,6 +245,7 @@ let debounceTimer = null
 
 const filters = ref({ search: '', category_id: null, sub_category_id: null })
 
+
 const rootCategories = computed(() => categories.value.filter(c => !c.parent_id))
 const subCategories  = computed(() => filters.value.category_id
   ? categories.value.filter(c => c.parent_id === filters.value.category_id) : [])
@@ -250,12 +263,7 @@ const loadBriefs = async () => {
     const res = await api.get('/client/briefs', { params })
     briefs.value = res.data
   } catch {
-    briefs.value = [
-      { id: 1, title: 'Expert Zellige & Design Intérieur', description: 'Spécialiste en création de motifs Zellige traditionnels pour projets résidentiels et commerciaux haut de gamme.', category: { name: 'Design' }, freelancer: { id: 10, name: 'Yasmine B.' }, likes_count: 42, comments_count: 3, favorites_count: 8, price: 8000, timeline: 'Disponible immédiatement' },
-      { id: 2, title: 'Développeur Full-Stack Laravel/Vue', description: 'Expert Laravel + Vue.js avec 5 ans d\'expérience. Disponible pour projets web complexes et applications SaaS.', category: { name: 'Développement' }, freelancer: { id: 11, name: 'Omar K.' }, likes_count: 65, comments_count: 5, favorites_count: 12, price: 15000, timeline: '2 semaines' },
-      { id: 3, title: 'Photographe & Vidéaste Professionnel', description: 'Couverture d\'événements, shooting produits, vidéos promotionnelles. Équipement haut de gamme.', category: { name: 'Médias' }, freelancer: { id: 12, name: 'Sara M.' }, likes_count: 28, comments_count: 2, favorites_count: 5, price: 5000, timeline: 'Flexible' },
-      { id: 4, title: 'Expert Marketing Digital & SEO', description: 'Stratégie digitale, gestion réseaux sociaux, SEO/SEM. Résultats mesurables garantis sous 3 mois.', category: { name: 'Marketing' }, freelancer: { id: 13, name: 'Karim A.' }, likes_count: 33, comments_count: 7, favorites_count: 9, price: 6000, timeline: 'En continu' },
-    ]
+    briefs.value = []
   } finally { loading.value = false }
 }
 
@@ -268,6 +276,10 @@ const loadCategories = async () => {
 
 const debouncedLoad = () => { clearTimeout(debounceTimer); debounceTimer = setTimeout(loadBriefs, 400) }
 const resetFilters  = () => { filters.value = { search: '', category_id: null, sub_category_id: null }; loadBriefs() }
+
+watch(() => filters.value.search, debouncedLoad)
+watch(() => filters.value.category_id, onCategoryChange)
+watch(() => filters.value.sub_category_id, loadBriefs)
 
 const onNavSearch = ({ query, category }) => {
   filters.value.search      = query
