@@ -77,8 +77,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/categories', [FreelancerController::class, 'getCategories']);
     });
 
-    // Messages & Search
-    Route::get('/users/search', [\App\Http\Controllers\Api\MessageController::class, 'searchUsers']);
+    // Messages
     Route::get('/conversations', [\App\Http\Controllers\Api\MessageController::class, 'getConversations']);
     Route::get('/conversations/{userId}', [\App\Http\Controllers\Api\MessageController::class, 'getMessages']);
     Route::post('/messages', [\App\Http\Controllers\Api\MessageController::class, 'sendMessage']);
