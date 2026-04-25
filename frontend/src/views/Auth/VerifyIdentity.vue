@@ -102,11 +102,10 @@
 
 <script setup>
 import { ref, reactive } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import axios from 'axios'
+import { useRouter } from 'vue-router'
+import api from '@/api/axios'
 
 const router = useRouter()
-const route = useRoute()
 const loading = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
@@ -160,12 +159,8 @@ const handleVerification = async () => {
     formData.append('id_number', form.id_number)
     formData.append('birthplace', form.birthplace)
 
-    const token = localStorage.getItem('token')
-    const response = await axios.post('http://localhost:8000/api/user/verify', formData, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'multipart/form-data'
-      }
+    await api.post('/user/verify', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
     })
 
     successMessage.value = 'Document envoyé avec succès ! En attente de validation par un administrateur.'
