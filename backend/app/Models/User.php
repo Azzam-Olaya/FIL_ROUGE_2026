@@ -77,6 +77,11 @@ class User extends Authenticatable
         return $this->hasMany(Portfolio::class, 'freelancer_id');
     }
 
+    public function contracts()
+    {
+        return $this->hasMany(\App\Models\Contract::class, 'freelancer_id');
+    }
+
     /**
      * Conversion automatique des types de données.
      */
