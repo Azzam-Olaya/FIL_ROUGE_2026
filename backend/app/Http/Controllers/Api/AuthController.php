@@ -22,10 +22,15 @@ class AuthController extends Controller
     {
         // Validation des données entrantes
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:users',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
-            'role_name' => 'required|in:client,freelancer', // 2: Client, 3: Freelancer
+            'password' => 'required|string|min:8|confirmed',
+            'role_name' => 'required|in:client,freelancer',
+        ], [
+            'name.unique'                => 'Ce nom est déjà utilisé par un autre compte.',
+            'email.unique'               => 'Cette adresse email est déjà associée à un compte.',
+            'password.confirmed'         => 'Les mots de passe ne correspondent pas.',
+            'password.min'               => 'Le mot de passe doit contenir au moins 8 caractères.',
         ]);
 
         // Récupération du rôle
@@ -97,9 +102,12 @@ class AuthController extends Controller
     {
         // Validation que le fichier est bien une image ou un PDF
         $request->validate([
-            'document' => 'required|file|mimes:pdf,jpg,jpeg,png|max:4096',
-            'id_number' => 'required|string|max:50',
-            'birthplace' => 'required|string|max:100',
+            'document'   => 'required|file|mimes:pdf,jpg,jpeg,png|max:4096',
+            'id_number'  => ['required', 'string', 'max:50', 'regex:/^[A-Z]{1,2}\d{5,6}$/'],
+            'birthplace' => ['required', 'string', 'max:100', 'regex:/^[\p{L}\s\-]+$/u'],
+        ], [
+            'id_number.regex'  => 'Format invalide. Exemples : A12345 (CIN) ou AA123456 (Passeport).',
+            'birthplace.regex' => 'Le lieu de naissance ne doit contenir que des lettres.',
         ]);
 
         $user = $request->user();
