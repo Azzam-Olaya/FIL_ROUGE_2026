@@ -84,7 +84,13 @@
         :class="showComments ? 'text-primary bg-primary/10' : 'text-on-surface-variant hover:bg-surface-container hover:text-primary'"
         class="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl transition-all font-bold text-xs uppercase tracking-widest">
         <span class="material-symbols-outlined text-base">chat_bubble</span>
-        Commentaires
+        Messages
+      </button>
+      <button @click="toggleApplications"
+        :class="showApplications ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-on-surface-variant hover:bg-surface-container hover:text-primary'"
+        class="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl transition-all font-bold text-xs uppercase tracking-widest border border-transparent">
+        <span class="material-symbols-outlined text-base">group</span>
+        Candidatures
       </button>
     </div>
 
@@ -141,6 +147,54 @@
       <p v-else class="text-center text-xs text-on-surface-variant py-3 italic">Aucun commentaire pour le moment</p>
     </div>
 
+    <!-- Applications Section -->
+    <div v-if="showApplications" class="px-6 py-6 space-y-4 bg-primary/5 border-b border-primary/5 animate-in">
+      <p class="text-[10px] font-black uppercase tracking-widest text-primary mb-4 flex items-center gap-2">
+        <span class="material-symbols-outlined text-sm font-black">group</span>
+        Freelancers ayant postulé
+      </p>
+
+      <div v-if="loadingApps" class="flex justify-center py-6">
+        <span class="material-symbols-outlined text-primary/30 animate-spin">progress_activity</span>
+      </div>
+
+      <div v-else-if="appsList.length" class="space-y-4">
+        <div v-for="app in appsList" :key="app.id" class="bg-white border border-primary/10 rounded-3xl p-5 shadow-sm hover:border-primary/30 transition-all">
+          <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-primary/10">
+                {{ initials(app.freelancer?.name) }}
+              </div>
+              <div>
+                <p class="font-bold text-on-surface">{{ app.freelancer?.name }}</p>
+                <p class="text-primary font-black text-xs">{{ Number(app.price).toLocaleString() }} DH</p>
+              </div>
+            </div>
+            
+            <div v-if="app.status === 'pending'" class="flex gap-2 w-full sm:w-auto">
+              <button @click="acceptApp(app)" :disabled="processingApp"
+                class="flex-1 sm:flex-none px-6 py-2 bg-primary text-white rounded-full text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-md shadow-primary/20">
+                Accepter
+              </button>
+              <button class="flex-1 sm:flex-none px-6 py-2 border border-primary/20 text-on-surface-variant rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-red-50 hover:text-red-600 hover:border-red-600 transition-all">
+                Refuser
+              </button>
+            </div>
+            <div v-else class="flex items-center gap-2 text-green-600 bg-green-50 px-3 py-1 rounded-full border border-green-100">
+               <span class="material-symbols-outlined text-sm font-black">check_circle</span>
+               <span class="text-[10px] font-black uppercase tracking-widest">{{ app.status }}</span>
+            </div>
+          </div>
+          <div class="mt-4 p-4 bg-surface-container/50 rounded-2xl border border-primary/5 italic text-sm text-on-surface-variant">
+            "{{ app.proposal }}"
+          </div>
+        </div>
+      </div>
+      <p v-else class="text-center text-xs text-on-surface-variant py-6 italic bg-white/50 rounded-3xl border border-dashed border-primary/10">
+        Personne n'a encore postulé à cette mission.
+      </p>
+    </div>
+
     <!-- Contact Modal -->
     <Teleport to="body">
       <div v-if="showContactModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" @click.self="showContactModal = false">
@@ -187,12 +241,16 @@ const store = useClientStore()
 
 const showComments     = ref(false)
 const showLikes        = ref(false)
+const showApplications = ref(false)
 const showContactModal = ref(false)
 const expanded         = ref(false)
 const commentsList     = ref([])
 const likesList        = ref([])
+const appsList         = ref([])
 const loadingComments  = ref(false)
 const loadingLikes     = ref(false)
+const loadingApps      = ref(false)
+const processingApp    = ref(false)
 const contactTarget    = ref(null)
 const contactMessage   = ref('')
 const sending          = ref(false)
@@ -227,6 +285,36 @@ const contactFreelancer = (comment) => {
   contactTarget.value    = comment
   contactMessage.value   = ''
   showContactModal.value = true
+}
+
+const toggleApplications = async () => {
+  showApplications.value = !showApplications.value
+  showComments.value = false
+  showLikes.value = false
+  if (showApplications.value && !appsList.value.length) {
+    loadingApps.value = true
+    try {
+      const res = await api.get(`/client/missions/${props.mission.id}/applications`)
+      appsList.value = res.data
+    } catch {} finally { loadingApps.value = false }
+  }
+}
+
+const acceptApp = async (app) => {
+  if (!confirm(`Voulez-vous lancer ce projet avec ${app.freelancer?.name} ? Un montant de ${Number(app.price).toLocaleString()} DH sera bloqué en escrow.`)) return
+  
+  processingApp.value = true
+  try {
+    const res = await api.post(`/client/applications/${app.id}/accept`)
+    alert('Succès : Contrat créé et projet lancé !')
+    // Refresh mission status locally
+    props.mission.status = 'in_progress'
+    showApplications.value = false
+    // Redirect to contracts
+    window.dispatchEvent(new CustomEvent('client-tab', { detail: 'contracts' }))
+  } catch (e) {
+    alert(e.response?.data?.message || 'Erreur lors de l’acceptation')
+  } finally { processingApp.value = false }
 }
 
 const sendContact = async () => {
