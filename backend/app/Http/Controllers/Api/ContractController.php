@@ -57,7 +57,7 @@ class ContractController extends Controller
                 // Débiter le solde du client immédiatement (Escrow)
                 $client->decrement('balance', $request->amount);
 
-                $commission = $request->amount * 0.05;
+                $commission = $request->amount * 0.10;
 
                 // Debug: Check if mission_id is null and find a fallback if necessary for testing
                 $missionId = $request->mission_id;
@@ -129,7 +129,7 @@ class ContractController extends Controller
 
             $contract->update([
                 'amount' => $request->amount,
-                'commission' => $request->amount * 0.05,
+                'commission' => $request->amount * 0.10,
                 'specifications' => $request->specifications,
                 'technologies' => $request->technologies,
                 'deadline' => $request->deadline,
@@ -198,7 +198,7 @@ class ContractController extends Controller
         
         /**
          * LOGIQUE DE PAIEMENT FREELANCE :
-         * Le freelance reçoit le montant net (Moins les 5% de commission).
+         * Le freelance reçoit le montant net (Moins les 10% de commission MorLancer).
          */
         $netAmount = $contract->amount - $contract->commission;
         
@@ -225,7 +225,7 @@ class ContractController extends Controller
         }
 
         // Calcul du remboursement (97.5%)
-        $refundAmount = $contract->amount * 0.975;
+        $refundAmount = $contract->amount * 0.90;
         $serviceFees = $contract->amount - $refundAmount;
 
         // Mise à jour du contrat
