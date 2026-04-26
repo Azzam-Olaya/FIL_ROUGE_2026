@@ -12,6 +12,41 @@ export const useClientStore = defineStore('client', () => {
     user.value?.name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U'
   )
 
+  const balance = ref(0)
+  const fetchBalance = async () => {
+    try {
+      const res = await api.get('/wallet/summary')
+      balance.value = res.data.balance
+    } catch { }
+  }
+
+  const capturePayPalPayment = async (orderID) => {
+    try {
+      const res = await api.post('/wallet/paypal/capture', { orderID })
+      balance.value = res.data.new_balance
+      return res.data
+    } catch (e) {
+      throw e
+    }
+  }
+
+  const stats = ref({
+    total_missions: 0,
+    total_contracts: 0,
+    total_spent: 0,
+    total_deposited: 0,
+    blocked_escrow: 0,
+    balance: 0
+  })
+
+  const fetchStats = async () => {
+    try {
+      const res = await api.get('/client/stats')
+      stats.value = res.data
+      balance.value = res.data.balance
+    } catch { }
+  }
+
   // ── Likes ──────────────────────────────────────────────────────────────────
   const likedIds = ref([])
   const isLiked = (id) => likedIds.value.includes(id)
@@ -82,5 +117,6 @@ export const useClientStore = defineStore('client', () => {
     likedIds, isLiked, toggleLike,
     favoritedBriefs, favoritedIds, isFavorited, toggleFavorite, fetchFavorites,
     notifications, unreadCount, markAllRead, markRead, fetchNotifications, startPolling,
+    balance, fetchBalance, capturePayPalPayment, stats, fetchStats
   }
 })
