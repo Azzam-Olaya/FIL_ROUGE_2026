@@ -43,6 +43,15 @@
         <span class="material-symbols-outlined">search</span>
       </button>
 
+      <!-- Wallet Balance -->
+      <div @click="showDeposit = true" class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-primary/5 rounded-full border border-primary/10 mr-2 cursor-pointer hover:bg-primary/10 transition-colors group">
+        <span class="material-symbols-outlined text-primary text-sm group-hover:scale-110 transition-transform">account_balance_wallet</span>
+        <span class="text-xs font-black text-primary">{{ Number(store.balance).toLocaleString() }} DH</span>
+        <span class="material-symbols-outlined text-xs text-primary/50">add_circle</span>
+      </div>
+
+      <DepositModal :is-open="showDeposit" @close="showDeposit = false" @success="store.fetchBalance()" />
+
       <!-- Notifications -->
       <div class="relative">
         <button @click="toggleNotif" class="p-2 rounded-full hover:bg-primary/10 transition-colors relative" title="Notifications">
@@ -166,6 +175,7 @@ import { useRouter } from 'vue-router'
 import { useClientStore } from '@/stores/client'
 import { useAuthStore }   from '@/stores/auth'
 import api from '@/api/axios'
+import DepositModal from '@/components/Client/DepositModal.vue'
 
 const emit = defineEmits(['search', 'toggle-sidebar'])
 const store     = useClientStore()
@@ -180,6 +190,7 @@ const searchQuery   = ref('')
 const categoryFilter = ref('')
 const categories    = ref([])
 const iconsRef      = ref(null)
+const showDeposit   = ref(false)
 
 const toggleNotif = async () => {
   notifOpen.value   = !notifOpen.value
@@ -242,6 +253,7 @@ const loadCategories = async () => {
 
 onMounted(() => {
   store.startPolling()
+  store.fetchBalance()
   loadCategories()
   document.addEventListener('click', handleOutside)
 })
