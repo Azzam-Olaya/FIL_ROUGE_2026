@@ -39,10 +39,17 @@
           <span class="material-symbols-outlined">arrow_back</span>
         </button>
         <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold text-xs flex-shrink-0">{{ initials(selectedUser.name) }}</div>
-        <div>
-          <h2 class="font-bold text-sm text-on-surface">{{ selectedUser.name }}</h2>
+        <div class="flex-1 min-w-0">
+          <h2 class="font-bold text-sm text-on-surface truncate">{{ selectedUser.name }}</h2>
           <p class="text-[10px] text-on-surface-variant capitalize">{{ selectedUser.role || 'Utilisateur' }}</p>
         </div>
+
+        <!-- NEW: Lancer Contrat Button (Visible only to Clients) -->
+        <button v-if="isClient" @click="showContractModal = true"
+          class="flex-shrink-0 px-4 py-2 rounded-xl bg-primary text-white font-bold text-[10px] uppercase tracking-widest flex items-center gap-2 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/20">
+          <span class="material-symbols-outlined text-xs">assignment</span>
+          <span class="hidden sm:inline">Lancer Contrat</span>
+        </button>
       </div>
 
       <div ref="messagesEl" class="flex-1 overflow-y-auto p-6 flex flex-col gap-3">
@@ -78,18 +85,34 @@
         </div>
       </div>
     </section>
-
+ 
     <section v-else class="flex-1 hidden md:flex flex-col items-center justify-center p-12 opacity-30 text-center">
       <span class="material-symbols-outlined text-8xl mb-4 text-primary" style="font-variation-settings: 'wght' 100">forum</span>
       <h3 class="font-headline text-xl font-bold">Vos messages</h3>
       <p class="text-sm mt-2">Sélectionnez une conversation pour commencer</p>
     </section>
+
+    <!-- Contract Modal -->
+    <ContractModal 
+      v-if="selectedUser"
+      :show="showContractModal" 
+      :freelancer-id="selectedUser.user_id" 
+      :freelancer-name="selectedUser.name"
+      @close="showContractModal = false"
+      @success="onContractCreated"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, nextTick, onMounted, onUnmounted } from 'vue'
+import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import api from '@/api/axios'
+import { useAuthStore } from '@/stores/auth'
+import ContractModal from '@/components/Client/ContractModal.vue'
+
+const authStore = useAuthStore()
+const isClient = computed(() => authStore.userRole === 'client')
+const showContractModal = ref(false)
 
 const props = defineProps({ autoOpen: { type: Object, default: null } })
 const emit  = defineEmits(['opened'])
@@ -162,7 +185,17 @@ const sendMessage = async () => {
     console.error('sendMessage error:', e?.response?.data || e)
     messages.value = messages.value.filter(m => m.id !== tempId)
   } finally { sending.value = false }
-}
+};
+
+const onContractCreated = (contract) => {
+  messages.value.push({
+    id: `sys_${Date.now()}`,
+    sender: 'system',
+    text: `📜 Proposition de contrat envoyée : ${Number(contract.amount).toLocaleString()} DH.`,
+    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  })
+  scrollBottom()
+};
 
 
 // ── Polling: check for new messages ───────────────────────────────────────
