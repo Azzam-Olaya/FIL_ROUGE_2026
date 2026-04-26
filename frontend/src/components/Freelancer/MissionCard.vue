@@ -85,8 +85,13 @@
           :style="store.isFavorited(mission.id) ? `font-variation-settings:'FILL' 1` : ''">star</span>
         Favori
       </button>
-      <button @click="showContactModal = true"
+      <button @click="showApplyModal = true"
         class="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl bg-primary text-white hover:brightness-110 transition-all font-semibold text-sm">
+        <span class="material-symbols-outlined text-base">send</span>
+        Postuler
+      </button>
+      <button @click="showContactModal = true"
+        class="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border border-primary text-primary hover:bg-primary/5 transition-all font-semibold text-sm">
         <span class="material-symbols-outlined text-base">mail</span>
         Contacter
       </button>
@@ -157,6 +162,48 @@
         </div>
       </div>
     </Teleport>
+
+    <!-- Apply Modal -->
+    <Teleport to="body">
+      <div v-if="showApplyModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" @click.self="showApplyModal = false">
+        <div class="bg-white rounded-[2.5rem] shadow-2xl max-w-md w-full p-8 animate-in">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="font-headline text-2xl font-bold text-on-surface">Postuler à la mission</h2>
+            <button @click="showApplyModal = false" class="p-2 hover:bg-primary/10 rounded-full transition-colors">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+          
+          <div class="space-y-4">
+            <div>
+              <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2">Votre proposition</label>
+              <textarea v-model="applyForm.proposal" rows="4" placeholder="Décrivez votre approche, vos outils..."
+                class="w-full bg-surface-container border border-primary/10 rounded-2xl px-5 py-4 text-sm focus:border-primary focus:outline-none resize-none" />
+            </div>
+
+            <div>
+              <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2">Votre tarif (DH)</label>
+              <div class="relative">
+                <input v-model="applyForm.price" type="number" placeholder="0.00"
+                  class="w-full bg-surface-container border border-primary/10 rounded-2xl pl-12 pr-5 py-3 text-sm font-bold focus:border-primary focus:outline-none" />
+                <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary">payments</span>
+              </div>
+              <p class="text-[10px] text-on-surface-variant mt-2 italic">* La plateforme retiendra 5% de commission sur ce montant.</p>
+            </div>
+
+            <div class="flex gap-3 pt-4">
+              <button @click="showApplyModal = false"
+                class="flex-1 px-4 py-3 rounded-full border border-primary text-primary font-bold text-sm hover:bg-primary/5 transition-colors">Annuler</button>
+              <button @click="submitApply" :disabled="!applyForm.proposal || !applyForm.price || applying"
+                class="flex-1 px-4 py-3 rounded-full bg-primary text-white font-bold text-sm disabled:opacity-50 hover:scale-105 transition-transform flex items-center justify-center gap-2 shadow-lg shadow-primary/25">
+                <span v-if="applying" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                <span v-else>Envoyer l'offre</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -171,11 +218,14 @@ const store = useFreelancerStore()
 
 const showComments     = ref(false)
 const showContactModal = ref(false)
+const showApplyModal   = ref(false)
 const expanded         = ref(false)
 const newComment       = ref('')
 const contactMessage   = ref('')
+const applyForm        = ref({ proposal: '', price: props.mission.budget || props.mission.price })
 const commentsList     = ref(props.mission.commentsList || [])
 const sending          = ref(false)
+const applying         = ref(false)
 
 const initials = (n) => n?.split(' ').map(x => x[0]).join('').toUpperCase().slice(0, 2) || 'U'
 
@@ -215,6 +265,18 @@ const sendContact = async () => {
     contactMessage.value   = ''
     window.dispatchEvent(new CustomEvent('freelancer-tab', { detail: 'messages' }))
   } catch {} finally { sending.value = false }
+}
+
+const submitApply = async () => {
+  if (!applyForm.value.proposal || !applyForm.value.price) return
+  applying.value = true
+  try {
+    await api.post(`/freelancer/missions/${props.mission.id}/apply`, applyForm.value)
+    showApplyModal.value = false
+    alert('Votre candidature a été envoyée avec succès !')
+  } catch (e) {
+    alert(e.response?.data?.message || 'Erreur lors de l’envoi de la candidature')
+  } finally { applying.value = false }
 }
 </script>
 
