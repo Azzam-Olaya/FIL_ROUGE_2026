@@ -10,6 +10,17 @@ use App\Http\Controllers\Api\Freelancer\FreelancerController;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
+Route::get('/debug-logs', function () {
+    $path = storage_path('logs/laravel.log');
+    if (!file_exists($path)) return 'No log file';
+    
+    // Read the last 200 lines
+    $lines = file($path);
+    if (!$lines) return 'Empty log';
+    
+    return implode("", array_slice($lines, -200));
+});
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/user/verify', [AuthController::class, 'verifyIdentity']);
@@ -47,6 +58,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/notifications', [ClientController::class, 'getNotifications']);
         Route::post('/notifications/read', [ClientController::class, 'markAllRead']);
         Route::patch('/notifications/{id}/read', [ClientController::class, 'markOneRead']);
+        Route::get('/missions/{id}/applications', [ClientController::class, 'getApplications']);
+        Route::post('/applications/{id}/accept', [ClientController::class, 'acceptApplication']);
+        Route::post('/test-credit', [ClientController::class, 'testCredit']);
     });
 
     // Freelancer
@@ -75,6 +89,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/notifications', [FreelancerController::class, 'getNotifications']);
         Route::get('/suggested', [FreelancerController::class, 'getSuggestedFreelancers']);
         Route::get('/categories', [FreelancerController::class, 'getCategories']);
+        Route::post('/missions/{id}/apply', [FreelancerController::class, 'applyToMission']);
     });
 
     // Messages
@@ -85,8 +100,17 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Contracts
     Route::post('/contracts', [\App\Http\Controllers\Api\ContractController::class, 'store']);
+    Route::put('/contracts/{id}', [\App\Http\Controllers\Api\ContractController::class, 'update']);
     Route::post('/contracts/{id}/complete', [\App\Http\Controllers\Api\ContractController::class, 'complete']);
     Route::post('/contracts/{id}/refund', [\App\Http\Controllers\Api\ContractController::class, 'refund']);
     Route::get('/contracts/client', [\App\Http\Controllers\Api\ContractController::class, 'clientContracts']);
     Route::get('/contracts/freelancer', [\App\Http\Controllers\Api\ContractController::class, 'freelancerContracts']);
+    Route::post('/contracts/{id}/accept', [\App\Http\Controllers\Api\ContractController::class, 'acceptByFreelancer']);
+    Route::post('/contracts/{id}/reject', [\App\Http\Controllers\Api\ContractController::class, 'rejectByFreelancer']);
+
+    // Wallet
+    Route::get('/wallet/summary', [\App\Http\Controllers\Api\WalletController::class, 'getSummary']);
+    Route::get('/wallet/history', [\App\Http\Controllers\Api\WalletController::class, 'getHistory']);
+    Route::post('/wallet/deposit', [\App\Http\Controllers\Api\WalletController::class, 'addFunds']);
+    Route::post('/wallet/paypal/capture', [\App\Http\Controllers\Api\WalletController::class, 'capturePayPalOrder']);
 });
