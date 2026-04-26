@@ -62,10 +62,18 @@
                <p class="text-xs text-primary font-bold italic">En ligne</p>
              </div>
           </div>
-          <div class="flex gap-2">
-            <button class="w-10 h-10 rounded-full bg-white/50 flex items-center justify-center hover:bg-primary/10 transition-colors text-on-surface-variant"><span class="material-symbols-outlined">call</span></button>
-            <button class="w-10 h-10 rounded-full bg-white/50 flex items-center justify-center hover:bg-primary/10 transition-colors text-on-surface-variant"><span class="material-symbols-outlined">video_call</span></button>
-            <button class="w-10 h-10 rounded-full bg-white/50 flex items-center justify-center hover:bg-primary/10 transition-colors text-on-surface-variant"><span class="material-symbols-outlined">more_vert</span></button>
+          <div class="flex items-center gap-3">
+            <!-- New: Lancer Contrat Button (Client Only) -->
+            <button v-if="isClient" @click="showContractModal = true"
+              class="px-5 py-2.5 rounded-xl bg-primary text-white font-bold text-xs uppercase tracking-widest flex items-center gap-2 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/20">
+              <span class="material-symbols-outlined text-sm">assignment</span>
+              <span>Lancer Contrat</span>
+            </button>
+            <div class="flex gap-2">
+              <button class="w-10 h-10 rounded-full bg-white/50 flex items-center justify-center hover:bg-primary/10 transition-colors text-on-surface-variant"><span class="material-symbols-outlined">call</span></button>
+              <button class="w-10 h-10 rounded-full bg-white/50 flex items-center justify-center hover:bg-primary/10 transition-colors text-on-surface-variant"><span class="material-symbols-outlined">video_call</span></button>
+              <button class="w-10 h-10 rounded-full bg-white/50 flex items-center justify-center hover:bg-primary/10 transition-colors text-on-surface-variant"><span class="material-symbols-outlined">more_vert</span></button>
+            </div>
           </div>
         </div>
 
@@ -116,15 +124,31 @@
         <p class="max-w-xs mx-auto mt-2 font-medium">L'excellence commence par un échange de qualité.</p>
       </section>
     </div>
+
+    <!-- Modals -->
+    <ContractModal 
+      v-if="selectedChat"
+      :show="showContractModal" 
+      :freelancer-id="selectedChat.id" 
+      :freelancer-name="selectedChat.name"
+      @close="showContractModal = false"
+      @success="onContractCreated"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
+import { useAuthStore } from '@/stores/auth';
 import TopNavBar from '@/components/Common/TopNavBar.vue';
+import ContractModal from '@/components/Client/ContractModal.vue';
+
+const authStore = useAuthStore();
+const isClient = computed(() => authStore.userRole === 'client');
 
 const selectedChat = ref(null);
 const newMessage = ref('');
+const showContractModal = ref(false);
 
 const chats = ref([
   { id: 1, name: 'Fatima Zohra', avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80', lastMessage: "Le motif Zellige pour le salon est prêt. J'attends votre...", time: '14:20', online: true, unread: true },
@@ -146,6 +170,16 @@ const sendMessage = () => {
     time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   });
   newMessage.value = '';
+};
+
+const onContractCreated = (contract) => {
+  // Optionnel: Ajouter un message système dans le chat pour dire que le contrat a été envoyé
+  messages.value.push({
+    sender: 'me',
+    text: `📜 Contrat proposé : ${contract.amount} DH. En attente de votre validation.`,
+    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    isSystem: true
+  });
 };
 </script>
 

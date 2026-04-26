@@ -26,10 +26,16 @@
                 Transformez vos idées en succès avec des freelances expérimentés
               </p>
             </div>
-            <button @click="showNewBriefModal = true"
-              class="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary text-white px-6 py-3 rounded-full font-bold text-sm hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/30">
-              <span class="material-symbols-outlined text-sm">add</span>Nouvelle mission
-            </button>
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+              <button @click="showCredit = true"
+                class="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-error text-white px-6 py-3 rounded-full font-bold text-sm hover:scale-105 active:scale-95 transition-all shadow-xl shadow-error/30">
+                <span class="material-symbols-outlined text-sm">payments</span>Créditer (Test)
+              </button>
+              <button @click="showNewBriefModal = true"
+                class="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-primary text-white px-6 py-3 rounded-full font-bold text-sm hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/30">
+                <span class="material-symbols-outlined text-sm">add</span>Nouvelle mission
+              </button>
+            </div>
           </header>
 
           <!-- Brief feed filters -->
@@ -125,20 +131,41 @@
                 <p class="text-on-surface-variant text-sm">Client · MorLancer</p>
               </div>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mt-8">
               <div class="bg-surface-container rounded-2xl p-4 border border-primary/5">
                 <div class="flex items-center gap-2 mb-2">
                   <span class="material-symbols-outlined text-primary text-sm">work</span>
-                  <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Missions publiées</p>
+                  <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Missions</p>
                 </div>
-                <p class="font-black text-2xl text-primary">{{ myMissions.length }}</p>
+                <p class="font-black text-2xl text-primary">{{ store.stats.total_missions }}</p>
               </div>
               <div class="bg-surface-container rounded-2xl p-4 border border-primary/5">
                 <div class="flex items-center gap-2 mb-2">
-                  <span class="material-symbols-outlined text-secondary text-sm" style="font-variation-settings:'FILL' 1">favorite</span>
-                  <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Briefs favoris</p>
+                  <span class="material-symbols-outlined text-blue-500 text-sm">handshake</span>
+                  <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Contrats</p>
                 </div>
-                <p class="font-black text-2xl text-secondary">{{ store.favoritedBriefs.length }}</p>
+                <p class="font-black text-2xl text-blue-500">{{ store.stats.total_contracts }}</p>
+              </div>
+              <div class="bg-surface-container rounded-2xl p-4 border border-primary/5">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="material-symbols-outlined text-green-500 text-sm">payments</span>
+                  <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Total Déposé</p>
+                </div>
+                <p class="font-black text-xl text-green-500">{{ Number(store.stats.total_deposited).toLocaleString() }} DH</p>
+              </div>
+              <div class="bg-surface-container rounded-2xl p-4 border border-primary/5">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="material-symbols-outlined text-red-500 text-sm">shopping_cart_checkout</span>
+                  <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Total Dépensé</p>
+                </div>
+                <p class="font-black text-xl text-red-500">{{ Number(store.stats.total_spent).toLocaleString() }} DH</p>
+              </div>
+              <div class="bg-surface-container rounded-2xl p-4 border border-primary/5">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="material-symbols-outlined text-orange-500 text-sm">lock</span>
+                  <p class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Bloqué (Escrow)</p>
+                </div>
+                <p class="font-black text-xl text-orange-500">{{ Number(store.stats.blocked_escrow).toLocaleString() }} DH</p>
               </div>
             </div>
           </div>
@@ -215,6 +242,8 @@
         </div>
       </div>
     </Teleport>
+
+    <CreditModal :is-open="showCredit" @close="showCredit = false" @success="onCreditSuccess" />
   </div>
 </template>
 
@@ -228,6 +257,7 @@ import MyMissionCard   from '@/components/Client/MyMissionCard.vue'
 import MessagingPanel  from '@/components/Common/MessagingPanel.vue'
 import PaymentTab      from '@/components/Common/PaymentTab.vue'
 import ContractTab     from '@/components/Common/ContractTab.vue'
+import CreditModal     from '@/components/Client/CreditModal.vue'
 import { useClientStore } from '@/stores/client'
 import api from '@/api/axios'
 
@@ -299,6 +329,13 @@ const loadMyMissions = async () => {
   } catch { myMissions.value = [] } finally { loadingMyMissions.value = false }
 }
 
+// ── Wallet / Credit ──────────────────────────────────────────────────────────
+const showCredit = ref(false)
+const onCreditSuccess = () => {
+  store.fetchStats()
+  store.fetchBalance()
+}
+
 // ── New Brief Modal ──────────────────────────────────────────────────────────
 const showNewBriefModal = ref(false)
 const submittingBrief   = ref(false)
@@ -359,6 +396,7 @@ const handleOpenConv  = (e) => { pendingConversation.value = e.detail; activeTab
 watch(() => route.query.tab, (t) => { if (t) activeTab.value = t })
 watch(activeTab, (t) => {
   if (t === 'briefs') loadMyMissions()
+  if (t === 'profile') store.fetchStats()
   router.push({ query: { tab: t } })
 })
 
@@ -366,6 +404,8 @@ onMounted(async () => {
   await loadCategories()
   await loadBriefs()
   store.fetchFavorites()
+  store.fetchBalance()
+  store.fetchStats()
   loadMyMissions()
   window.addEventListener('client-tab', handleTabEvent)
   window.addEventListener('open-conversation', handleOpenConv)

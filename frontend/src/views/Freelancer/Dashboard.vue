@@ -30,6 +30,28 @@
             </button>
           </header>
 
+          <!-- Pending Contracts Alert -->
+          <div v-if="pendingContracts.length" class="animate-in">
+            <div class="bg-primary p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] shadow-2xl shadow-primary/30 relative overflow-hidden group">
+              <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-110 transition-transform duration-700"></div>
+              <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="flex items-center gap-6">
+                  <div class="w-16 h-16 bg-white/20 rounded-3xl backdrop-blur-md flex items-center justify-center text-white shadow-inner">
+                    <span class="material-symbols-outlined text-4xl animate-bounce">assignment_late</span>
+                  </div>
+                  <div>
+                    <h2 class="text-white font-headline text-2xl md:text-3xl font-bold">Proposition de contrat !</h2>
+                    <p class="text-white/80 font-medium text-sm md:text-base mt-1">Vous avez {{ pendingContracts.length }} proposition{{ pendingContracts.length > 1 ? 's' : '' }} en attente de validation.</p>
+                  </div>
+                </div>
+                <button @click="openReview(pendingContracts[0])"
+                  class="w-full md:w-auto px-8 py-4 bg-white text-primary rounded-full font-black text-sm uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl">
+                  Voir la proposition
+                </button>
+              </div>
+            </div>
+          </div>
+
           <!-- Mission feed -->
           <section>
             <div class="flex flex-col md:flex-row items-baseline justify-between mb-6 gap-2">
@@ -262,6 +284,15 @@
         </div>
       </div>
     </Teleport>
+
+    <!-- Contract Review Modal -->
+    <ContractReviewModal 
+      v-if="reviewingContract"
+      :show="showReviewModal"
+      :contract="reviewingContract"
+      @close="showReviewModal = false"
+      @updated="onContractUpdated"
+    />
   </div>
 </template>
 
@@ -274,6 +305,7 @@ import MissionCard    from '@/components/Freelancer/MissionCard.vue'
 import MessagingPanel from '@/components/Common/MessagingPanel.vue'
 import PaymentTab     from '@/components/Common/PaymentTab.vue'
 import ContractTab    from '@/components/Common/ContractTab.vue'
+import ContractReviewModal from '@/components/Freelancer/ContractReviewModal.vue'
 import { useFreelancerStore } from '@/stores/freelancer'
 import api from '@/api/axios'
 
@@ -282,6 +314,10 @@ const route        = useRoute()
 const router       = useRouter()
 const activeTab    = ref(route.query.tab || 'dashboard')
 const sidebarOpen  = ref(false)
+
+const pendingContracts = ref([])
+const showReviewModal = ref(false)
+const reviewingContract = ref(null)
 
 // ── Missions (publiées par les clients) ─────────────────────────────────────
 const allMissions = ref([])
@@ -402,6 +438,23 @@ watch(activeTab, (t) => {
   router.push({ query: { tab: t } })
 })
 
+const loadPendingContracts = async () => {
+  try {
+    const res = await api.get('/contracts/freelancer')
+    pendingContracts.value = res.data.filter(c => c.status === 'pending_freelancer')
+  } catch {}
+}
+
+const openReview = (contract) => {
+  reviewingContract.value = contract
+  showReviewModal.value = true
+}
+
+const onContractUpdated = () => {
+  loadPendingContracts()
+  // Recharger les contrats actifs dans l'onglet Contrats si nécessaire
+}
+
 watch(() => route.query.briefId, (id) => {
   if (id && activeTab.value === 'briefs') {
     setTimeout(() => {
@@ -416,6 +469,7 @@ onMounted(() => {
   store.fetchFavorites()
   loadMissions()
   loadCategories()
+  loadPendingContracts()
   window.addEventListener('freelancer-tab', handleTabEvent)
 })
 onUnmounted(() => window.removeEventListener('freelancer-tab', handleTabEvent))
