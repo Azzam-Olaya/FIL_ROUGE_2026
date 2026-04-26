@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Contract;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Contrôleur Contrat & Paiement : Gère les fonds bloqués, les commissions et les remboursements.
@@ -31,49 +32,153 @@ class ContractController extends Controller
     }
 
     /**
-     * Création d'un contrat (Validation du devis par le client)
-     * Le client verse la somme totale qui est "bloquée" dans l'application.
+     * Création d'un contrat (Offre envoyée par le client)
+     * Le client verse la somme totale qui est mise en attente.
      */
     public function store(Request $request)
     {
-        // Validation des données
         $request->validate([
-            'mission_id' => 'required|exists:missions,id',
+            'mission_id' => 'nullable|exists:missions,id', // Optionnel si lancé via chat direct
             'freelancer_id' => 'required|exists:users,id',
-            'amount' => 'required|numeric|min:1', // Montant total du contrat
+            'amount' => 'required|numeric|min:1',
+            'specifications' => 'required|string',
+            'technologies' => 'required|string',
+            'deadline' => 'required|date|after_or_equal:today',
         ]);
 
         $client = $request->user();
         
-        // Vérification que le client a assez d'argent sur son solde
         if ($client->balance < $request->amount) {
-            return response()->json(['message' => 'Solde insuffisant pour valider ce contrat'], 400);
+            return response()->json(['message' => 'Solde insuffisant pour envoyer cette offre.'], 400);
         }
 
-        /**
-         * LOGIQUE DE PAIEMENT CLIENT :
-         * On décrémente le solde du client immédiatement.
-         * L'argent est maintenant "dans l'app" (fond bloqué).
-         */
-        $client->decrement('balance', $request->amount);
+        return DB::transaction(function () use ($request, $client) {
+            try {
+                // Débiter le solde du client immédiatement (Escrow)
+                $client->decrement('balance', $request->amount);
 
-        // Calcul de la commission de la plateforme (5%)
-        $commission = $request->amount * 0.05;
+                $commission = $request->amount * 0.05;
 
-        // Création de l'enregistrement du contrat
-        $contract = Contract::create([
-            'mission_id' => $request->mission_id,
-            'client_id' => $client->id,
-            'freelancer_id' => $request->freelancer_id,
-            'amount' => $request->amount,
-            'commission' => $commission,
-            'status' => 'active', // Le contrat est en cours d'exécution
+                // Debug: Check if mission_id is null and find a fallback if necessary for testing
+                $missionId = $request->mission_id;
+                if (!$missionId) {
+                    $missionId = \App\Models\Mission::first()?->id;
+                }
+
+                $contract = Contract::create([
+                    'mission_id' => $missionId,
+                    'client_id' => $client->id,
+                    'freelancer_id' => $request->freelancer_id,
+                    'amount' => $request->amount,
+                    'commission' => $commission,
+                    'specifications' => $request->specifications,
+                    'technologies' => $request->technologies,
+                    'deadline' => $request->deadline,
+                    'status' => 'pending_freelancer',
+                ]);
+
+                return response()->json([
+                    'message' => 'Offre de contrat envoyée au freelancer. Les fonds sont sécurisés.',
+                    'contract' => $contract
+                ], 201);
+
+            } catch (\Illuminate\Database\QueryException $e) {
+                // Re-créditer le client en cas d'erreur DB
+                $client->increment('balance', $request->amount);
+                
+                return response()->json([
+                    'message' => 'Erreur technique lors de la création du contrat.',
+                    'debug' => 'Vérifiez si mission_id est obligatoire dans votre base. Détail: ' . $e->getMessage()
+                ], 400);
+            }
+        });
+    }
+
+    /**
+     * Modification du contrat par le client (Avant acceptation)
+     */
+    public function update(Request $request, $id)
+    {
+        $contract = Contract::findOrFail($id);
+        
+        if ($contract->client_id !== auth()->id() || $contract->status !== 'pending_freelancer') {
+            return response()->json(['message' => 'Action non autorisée ou contrat déjà validé.'], 403);
+        }
+
+        $request->validate([
+            'amount' => 'required|numeric|min:1',
+            'specifications' => 'required|string',
+            'technologies' => 'required|string',
+            'deadline' => 'required|date|after_or_equal:today',
         ]);
 
-        return response()->json([
-            'message' => 'Contrat créé et fonds bloqués avec succès.',
-            'contract' => $contract
-        ], 201);
+        return DB::transaction(function () use ($request, $contract) {
+            $client = auth()->user();
+            $diff = $request->amount - $contract->amount;
+
+            if ($diff > 0) {
+                // Le nouveau prix est plus élevé, vérifier le solde
+                if ($client->balance < $diff) {
+                    throw new \Exception('Solde insuffisant pour augmenter le prix du contrat.');
+                }
+                $client->decrement('balance', $diff);
+            } elseif ($diff < 0) {
+                // Le nouveau prix est plus bas, rembourser la différence
+                $client->increment('balance', abs($diff));
+            }
+
+            $contract->update([
+                'amount' => $request->amount,
+                'commission' => $request->amount * 0.05,
+                'specifications' => $request->specifications,
+                'technologies' => $request->technologies,
+                'deadline' => $request->deadline,
+            ]);
+
+            return response()->json(['message' => 'Contrat mis à jour avec succès.', 'contract' => $contract]);
+        });
+    }
+
+    /**
+     * Acceptation par le freelancer
+     */
+    public function acceptByFreelancer($id)
+    {
+        $contract = Contract::findOrFail($id);
+        
+        if ($contract->freelancer_id !== auth()->id()) {
+            return response()->json(['message' => 'Non autorisé.'], 403);
+        }
+
+        if ($contract->status !== 'pending_freelancer') {
+            return response()->json(['message' => 'Ce contrat ne peut plus être accepté.'], 400);
+        }
+
+        $contract->update(['status' => 'active']);
+
+        return response()->json(['message' => 'Contrat accepté ! Vous pouvez commencer le travail.', 'contract' => $contract]);
+    }
+
+    /**
+     * Refus par le freelancer
+     */
+    public function rejectByFreelancer($id)
+    {
+        $contract = Contract::findOrFail($id);
+        
+        if ($contract->freelancer_id !== auth()->id()) {
+            return response()->json(['message' => 'Non autorisé.'], 403);
+        }
+
+        return DB::transaction(function () use ($contract) {
+            // Rembourser le client intégralement
+            $client = User::find($contract->client_id);
+            $client->increment('balance', $contract->amount);
+
+            $contract->update(['status' => 'cancelled']);
+
+            return response()->json(['message' => 'Contrat refusé. Le client a été remboursé.']);
+        });
     }
 
     /**
