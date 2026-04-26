@@ -13,6 +13,7 @@ use App\Models\MissionLike;
 use App\Models\MissionComment;
 use App\Models\MissionFavorite;
 use App\Models\Notification;
+use App\Models\MissionApplication;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
@@ -290,12 +291,48 @@ class FreelancerController extends Controller
     // Paiements
     public function getPayments(Request $request)
     {
-        return response()->json(
-            Contract::where('freelancer_id', $request->user()->id)
-                ->with('mission')
+        $user = $request->user();
+
+        // Contracts payments
+        $contracts = Contract::where('freelancer_id', $user->id)
+            ->with(['mission.client'])
+            ->latest()
+            ->get()
+            ->map(function($c) {
+                return [
+                    'id' => 'c_' . $c->id,
+                    'type' => 'contract_payment',
+                    'title' => $c->mission?->title ?? 'Contrat Direct',
+                    'party' => $c->mission?->client?->name ?? 'Client',
+                    'amount' => $c->amount,
+                    'status' => $c->status,
+                    'date' => $c->created_at,
+                    'raw_id' => $c->id
+                ];
+            });
+
+        // Transactions (future withdrawals, etc.)
+        try {
+            $transactions = \App\Models\Transaction::where('user_id', $user->id)
                 ->latest()
                 ->get()
-        );
+                ->map(function($t) {
+                    return [
+                        'id' => 't_' . $t->id,
+                        'type' => $t->type,
+                        'title' => $t->description,
+                        'party' => 'Système',
+                        'amount' => $t->amount,
+                        'status' => $t->status,
+                        'date' => $t->created_at,
+                        'raw_id' => $t->id
+                    ];
+                });
+        } catch (\Exception $e) {
+            $transactions = collect([]);
+        }
+
+        return response()->json($contracts->concat($transactions)->sortByDesc('date')->values());
     }
 
     // Stats dashboard
@@ -378,6 +415,40 @@ class FreelancerController extends Controller
             Notification::where('user_id', $request->user()->id)
                 ->latest()->take(30)->get()
         );
+    }
+
+    public function applyToMission(Request $request, $id)
+    {
+        $request->validate([
+            'proposal' => 'required|string',
+            'price' => 'required|numeric|min:1',
+        ]);
+
+        $mission = Mission::findOrFail($id);
+        
+        if ($mission->status !== 'open') {
+            return response()->json(['message' => 'Cette mission n’est plus ouverte aux candidatures.'], 400);
+        }
+
+        $freelancer = $request->user();
+
+        // Check if already applied
+        if (MissionApplication::where('mission_id', $id)->where('freelancer_id', $freelancer->id)->exists()) {
+            return response()->json(['message' => 'Vous avez déjà postulé à cette mission.'], 400);
+        }
+
+        $application = MissionApplication::create([
+            'mission_id' => $id,
+            'freelancer_id' => $freelancer->id,
+            'proposal' => $request->proposal,
+            'price' => $request->price,
+            'status' => 'pending'
+        ]);
+
+        return response()->json([
+            'message' => 'Candidature envoyée avec succès.',
+            'application' => $application
+        ], 201);
     }
 
     private function ensureTablesExist()
