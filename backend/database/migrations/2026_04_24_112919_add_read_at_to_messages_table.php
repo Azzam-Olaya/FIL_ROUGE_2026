@@ -5,13 +5,15 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
     public function up(): void {
-        Schema::table("messages", function (Blueprint $table) {
-            $table->timestamp("read_at")->nullable()->after("content");
-        });
+        if (!Schema::hasColumn('messages', 'read_at')) {
+            Schema::table('messages', function (Blueprint $table) {
+                $table->timestamp('read_at')->nullable()->after('content');
+            });
+        }
     }
     public function down(): void {
-        Schema::table("messages", function (Blueprint $table) {
-            $table->dropColumn("read_at");
+        Schema::table('messages', function (Blueprint $table) {
+            $table->dropColumn('read_at');
         });
     }
 };
