@@ -60,6 +60,68 @@ class AdminController extends Controller
             ];
         }
 
+        // ── Contrats stats ──────────────────────────────────────────────────
+        $contractsByStatus = Contract::selectRaw('status, count(*) as total, sum(amount) as volume')
+            ->groupBy('status')->get()
+            ->keyBy('status');
+
+        $contractsActive    = $contractsByStatus->get('active')?->total ?? 0;
+        $contractsPending   = $contractsByStatus->get('pending_freelancer')?->total ?? 0;
+        $contractsCompleted = $contractsByStatus->get('completed')?->total ?? 0;
+        $contractsRefunded  = $contractsByStatus->get('refunded')?->total ?? 0;
+        $contractsCancelled = $contractsByStatus->get('cancelled')?->total ?? 0;
+
+        $volumeTotal     = Contract::sum('amount');
+        $volumeCompleted = $contractsByStatus->get('completed')?->volume ?? 0;
+        $volumeEscrow    = Contract::whereIn('status', ['pending_freelancer', 'active'])->sum('amount');
+
+        // Contrats par semaine (4 dernières semaines)
+        $weeklyContracts = [];
+        for ($i = 3; $i >= 0; $i--) {
+            $start = $now->copy()->subWeeks($i)->startOfWeek();
+            $end   = $now->copy()->subWeeks($i)->endOfWeek();
+            $weeklyContracts[] = [
+                'label' => 'S' . $start->weekOfYear,
+                'count' => Contract::whereBetween('created_at', [$start, $end])->count(),
+            ];
+        }
+
+        // Top freelancers par contrats complétés
+        $topFreelancers = User::whereHas('role', fn($q) => $q->where('name', 'freelancer'))
+            ->withCount(['contracts as completed_contracts' => fn($q) => $q->where('status', 'completed')])
+            ->orderByDesc('completed_contracts')
+            ->limit(5)
+            ->get(['id', 'name'])
+            ->map(fn($u) => ['name' => $u->name, 'count' => $u->completed_contracts]);
+
+        // ── Paiements stats ─────────────────────────────────────────────────
+        $totalDeposits      = \App\Models\Transaction::where('type', 'deposit')->where('status', 'completed')->sum('amount');
+        $depositsThisMonth  = \App\Models\Transaction::where('type', 'deposit')->where('status', 'completed')->whereMonth('created_at', $thisMonth)->whereYear('created_at', $thisYear)->sum('amount');
+        $depositsLastMonth  = \App\Models\Transaction::where('type', 'deposit')->where('status', 'completed')->whereMonth('created_at', $lastMonth)->sum('amount');
+        $depositsTrend      = $depositsLastMonth > 0 ? round((($depositsThisMonth - $depositsLastMonth) / $depositsLastMonth) * 100) : ($depositsThisMonth > 0 ? 100 : 0);
+
+        $weeklyDeposits = [];
+        for ($i = 3; $i >= 0; $i--) {
+            $start = $now->copy()->subWeeks($i)->startOfWeek();
+            $end   = $now->copy()->subWeeks($i)->endOfWeek();
+            $weeklyDeposits[] = [
+                'label' => 'S' . $start->weekOfYear,
+                'amount' => round(\App\Models\Transaction::where('type', 'deposit')->where('status', 'completed')->whereBetween('created_at', [$start, $end])->sum('amount'), 2),
+            ];
+        }
+
+        $recentTransactions = \App\Models\Transaction::with('user')
+            ->where('status', 'completed')
+            ->latest()
+            ->limit(10)
+            ->get()
+            ->map(fn($t) => [
+                'user'   => $t->user?->name,
+                'type'   => $t->type,
+                'amount' => $t->amount,
+                'date'   => $t->created_at,
+            ]);
+
         return response()->json([
             'total_users'          => $totalUsers,
             'total_clients'        => $totalClients,
@@ -73,6 +135,23 @@ class AdminController extends Controller
             'contracts_trend'      => $contractsTrend,
             'revenue_trend'        => $revenueTrend,
             'weekly_registrations' => $weeklyRegistrations,
+            // contrats
+            'contracts_active'     => $contractsActive,
+            'contracts_pending'    => $contractsPending,
+            'contracts_completed'  => $contractsCompleted,
+            'contracts_refunded'   => $contractsRefunded,
+            'contracts_cancelled'  => $contractsCancelled,
+            'volume_total'         => round($volumeTotal, 2),
+            'volume_completed'     => round($volumeCompleted, 2),
+            'volume_escrow'        => round($volumeEscrow, 2),
+            'weekly_contracts'     => $weeklyContracts,
+            'top_freelancers'      => $topFreelancers,
+            // paiements
+            'total_deposits'       => round($totalDeposits, 2),
+            'deposits_this_month'  => round($depositsThisMonth, 2),
+            'deposits_trend'       => $depositsTrend,
+            'weekly_deposits'      => $weeklyDeposits,
+            'recent_transactions'  => $recentTransactions,
         ]);
     }
 
@@ -105,6 +184,9 @@ class AdminController extends Controller
 
     public function banUser($id)
     {
+        if ((int)$id === auth()->id()) {
+            return response()->json(['message' => 'Vous ne pouvez pas vous bannir vous-même.'], 403);
+        }
         $user = User::findOrFail($id);
         $user->update(['verification_status' => 'banned']);
         return response()->json(['message' => 'Utilisateur banni.']);
@@ -133,6 +215,7 @@ class AdminController extends Controller
     public function deleteCategory($id)
     {
         $category = Category::findOrFail($id);
+        // Rattacher les sous-catégories au parent de la catégorie supprimée
         Category::where('parent_id', $id)->update(['parent_id' => $category->parent_id]);
         $category->delete();
         return response()->json(['message' => 'Catégorie supprimée.']);
