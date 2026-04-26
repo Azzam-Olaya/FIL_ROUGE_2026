@@ -6,7 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class Contract extends Model
 {
-    protected $fillable = ['mission_id', 'client_id', 'freelancer_id', 'amount', 'commission', 'status'];
+    protected $fillable = [
+        'mission_id', 'client_id', 'freelancer_id', 
+        'amount', 'commission', 'status',
+        'specifications', 'technologies', 'deadline'
+    ];
 
     public function mission()
     {
