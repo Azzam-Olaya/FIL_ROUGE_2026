@@ -9,8 +9,12 @@ use App\Models\PortfolioLike;
 use App\Models\PortfolioComment;
 use App\Models\MissionFavorite;
 use App\Models\Notification;
+use App\Models\MissionApplication;
+use App\Models\Contract;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class ClientController extends Controller
 {
@@ -231,12 +235,51 @@ class ClientController extends Controller
 
     public function getPayments(Request $request)
     {
-        return response()->json(
-            \App\Models\Contract::where('client_id', $request->user()->id)
-                ->with(['mission', 'freelancer'])
+        $user = $request->user();
+
+        // Get contracts
+        $contracts = \App\Models\Contract::where('client_id', $user->id)
+            ->with(['mission', 'freelancer'])
+            ->latest()
+            ->get()
+            ->map(function($c) {
+                return [
+                    'id' => 'c_' . $c->id,
+                    'type' => 'contract_payment',
+                    'title' => $c->mission?->title ?? 'Contrat Direct',
+                    'party' => $c->freelancer?->name,
+                    'amount' => $c->amount,
+                    'status' => $c->status,
+                    'date' => $c->created_at,
+                    'raw_id' => $c->id
+                ];
+            });
+
+        // Get transactions (recharges, etc.)
+        try {
+            $transactions = \App\Models\Transaction::where('user_id', $user->id)
                 ->latest()
                 ->get()
-        );
+                ->map(function($t) {
+                    return [
+                        'id' => 't_' . $t->id,
+                        'type' => $t->type,
+                        'title' => $t->description,
+                        'party' => 'Système',
+                        'amount' => $t->amount,
+                        'status' => $t->status,
+                        'date' => $t->created_at,
+                        'raw_id' => $t->id
+                    ];
+                });
+        } catch (\Exception $e) {
+            $transactions = collect([]);
+        }
+
+        // Combine and sort
+        $all = $contracts->concat($transactions)->sortByDesc('date')->values();
+
+        return response()->json($all);
     }
 
     public function getStats(Request $request)
@@ -245,16 +288,91 @@ class ClientController extends Controller
 
         $totalMissions = \App\Models\Mission::where('client_id', $user->id)->count();
         $totalContracts = \App\Models\Contract::where('client_id', $user->id)->count();
-        $totalSpent = \App\Models\Contract::where('client_id', $user->id)->where('status', 'completed')->sum('amount');
-        $openMissions = \App\Models\Mission::where('client_id', $user->id)->where('status', 'open')->count();
+        $totalSpent = \App\Models\Contract::where('client_id', $user->id)->whereIn('status', ['paid', 'completed'])->sum('amount');
+        
+        $totalDeposited = 0;
+        try {
+            $totalDeposited = \App\Models\Transaction::where('user_id', $user->id)->where('type', 'deposit')->where('status', 'completed')->sum('amount');
+        } catch (\Exception $e) {}
+        
+        $blockedEscrow = \App\Models\Contract::where('client_id', $user->id)->whereIn('status', ['pending_freelancer', 'active'])->sum('amount');
 
         return response()->json([
             'total_missions'  => $totalMissions,
             'total_contracts' => $totalContracts,
             'total_spent'     => round($totalSpent, 2),
-            'open_missions'   => $openMissions,
+            'total_deposited' => round($totalDeposited, 2),
+            'blocked_escrow'  => round($blockedEscrow, 2),
             'balance'         => $user->balance,
         ]);
+    }
+
+    /**
+     * Voir les candidatures pour une mission spécifique
+     */
+    public function getApplications($mission_id)
+    {
+        $mission = Mission::where('client_id', auth()->id())->findOrFail($mission_id);
+        $applications = MissionApplication::where('mission_id', $mission_id)
+            ->with('freelancer')
+            ->latest()
+            ->get();
+        
+        return response()->json($applications);
+    }
+
+    /**
+     * Accepter une candidature et CRÉER LE CONTRAT (Lance le projet)
+     */
+    public function acceptApplication(Request $request, $application_id)
+    {
+        $application = MissionApplication::with('mission')->findOrFail($application_id);
+        $mission = $application->mission;
+
+        if ($mission->client_id !== auth()->id()) {
+            return response()->json(['message' => 'Non autorisé.'], 403);
+        }
+
+        if ($application->status !== 'pending') {
+            return response()->json(['message' => 'Cette candidature n’est plus en attente.'], 400);
+        }
+
+        return DB::transaction(function () use ($application, $mission, $request) {
+            // Mettre à jour le statut de la candidature
+            $application->update(['status' => 'accepted']);
+            
+            // Rejeter les autres candidatures
+            MissionApplication::where('mission_id', $mission->id)
+                ->where('id', '!=', $application->id)
+                ->update(['status' => 'rejected']);
+
+            // Mettre à jour le statut de la mission
+            $mission->update(['status' => 'in_progress']);
+
+            /**
+             * Lancer le contrat via ContractController
+             */
+            $contractData = new Request([
+                'mission_id' => $mission->id,
+                'freelancer_id' => $application->freelancer_id,
+                'amount' => $application->price,
+            ]);
+            
+            $request->setUserResolver(fn() => auth()->user()); 
+            
+            $contractController = new \App\Http\Controllers\Api\ContractController();
+            $contractResponse = $contractController->store($contractData);
+
+            if ($contractResponse->getStatusCode() !== 201) {
+                throw new \Exception($contractResponse->getData()->message);
+            }
+
+            return response()->json([
+                'message' => 'Candidature acceptée ! Le projet est lancé et le contrat a été créé.',
+                'contract' => $contractResponse->getData()->contract,
+                'application' => $application
+            ]);
+        });
     }
 
     private function ensureTablesExist()
@@ -272,6 +390,16 @@ class ClientController extends Controller
             if (!\Illuminate\Support\Facades\Schema::hasColumn('portfolios', 'duration')) {
                 \Illuminate\Support\Facades\DB::statement('ALTER TABLE portfolios ADD COLUMN duration VARCHAR(100) NULL');
             }
+            if (!\Illuminate\Support\Facades\Schema::hasTable('mission_favorites')) {
+                \Illuminate\Support\Facades\DB::statement("CREATE TABLE mission_favorites (id SERIAL PRIMARY KEY, mission_id BIGINT NOT NULL REFERENCES missions(id) ON DELETE CASCADE, user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE, created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL, UNIQUE(mission_id, user_id))");
+            }
         } catch (\Exception $e) {}
+    }
+
+    public function testCredit(Request $request) {
+        $request->validate(['amount' => 'required|numeric|min:1']);
+        $user = $request->user();
+        $user->increment('balance', $request->amount);
+        return response()->json(['message' => 'Crédit test ajouté.', 'balance' => $user->balance]);
     }
 }
