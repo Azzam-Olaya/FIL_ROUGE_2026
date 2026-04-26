@@ -27,8 +27,9 @@
         <table class="w-full text-sm">
           <thead>
             <tr class="border-b border-primary/5 bg-surface-container/40">
-              <th class="text-left px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant whitespace-nowrap">Mission</th>
-              <th class="text-left px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant whitespace-nowrap">{{ role === 'freelancer' ? 'Client' : 'Freelancer' }}</th>
+              <th class="text-left px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant whitespace-nowrap">Type</th>
+              <th class="text-left px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant whitespace-nowrap">Description</th>
+              <th class="text-left px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant whitespace-nowrap">{{ role === 'freelancer' ? 'Partie' : 'Tiers' }}</th>
               <th class="text-left px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant whitespace-nowrap">Montant</th>
               <th class="text-left px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant whitespace-nowrap">Statut</th>
               <th class="text-left px-6 py-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant whitespace-nowrap">Date</th>
@@ -36,11 +37,23 @@
           </thead>
           <tbody class="divide-y divide-primary/5">
             <tr v-for="p in payments" :key="p.id" class="hover:bg-surface-container/20 transition-colors">
-              <td class="px-6 py-4 font-semibold text-on-surface whitespace-nowrap">{{ p.mission?.title || '—' }}</td>
-              <td class="px-6 py-4 text-on-surface-variant whitespace-nowrap">{{ role === 'freelancer' ? p.mission?.client?.name : p.freelancer?.name || '—' }}</td>
-              <td class="px-6 py-4 font-black text-primary whitespace-nowrap">{{ Number(p.amount).toLocaleString('fr-FR') }} MAD</td>
-              <td class="px-6 py-4 whitespace-nowrap"><span :class="statusClass(p.status)" class="text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">{{ statusLabel(p.status) }}</span></td>
-              <td class="px-6 py-4 text-on-surface-variant text-xs whitespace-nowrap">{{ formatDate(p.created_at) }}</td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center gap-2">
+                  <span class="material-symbols-outlined text-sm" :class="typeIcon(p.type).color">{{ typeIcon(p.type).icon }}</span>
+                  <span class="text-[10px] font-black uppercase tracking-tighter opacity-60">{{ typeLabel(p.type) }}</span>
+                </div>
+              </td>
+              <td class="px-6 py-4 font-semibold text-on-surface whitespace-nowrap">{{ p.title || '—' }}</td>
+              <td class="px-6 py-4 text-on-surface-variant whitespace-nowrap">{{ p.party || '—' }}</td>
+              <td class="px-6 py-4 font-black whitespace-nowrap" :class="p.type === 'deposit' ? 'text-green-600' : 'text-primary'">
+                {{ p.type === 'deposit' ? '+' : '-' }} {{ Number(p.amount).toLocaleString('fr-FR') }} DH
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span :class="statusClass(p.status)" class="text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">
+                  {{ statusLabel(p.status) }}
+                </span>
+              </td>
+              <td class="px-6 py-4 text-on-surface-variant text-xs whitespace-nowrap">{{ formatDate(p.date) }}</td>
             </tr>
           </tbody>
         </table>
@@ -75,8 +88,32 @@ const load = async () => {
   }
 }
 
-const statusClass = (s) => ({ completed: 'bg-green-100 text-green-700', pending: 'bg-yellow-100 text-yellow-700', active: 'bg-primary/10 text-primary' }[s] || 'bg-surface-container text-on-surface-variant')
-const statusLabel = (s) => ({ completed: 'Complété', pending: 'En attente', active: 'En cours' }[s] || s)
+const statusClass = (s) => ({
+  completed: 'bg-green-100 text-green-700',
+  pending: 'bg-yellow-100 text-yellow-700',
+  active: 'bg-primary/10 text-primary',
+  pending_freelancer: 'bg-orange-100 text-orange-700'
+}[s] || 'bg-surface-container text-on-surface-variant')
+
+const statusLabel = (s) => ({
+  completed: 'Succès',
+  pending: 'En attente',
+  active: 'Bloqué Escrow',
+  pending_freelancer: 'Proposition'
+}[s] || s)
+
+const typeIcon = (t) => ({
+  deposit: { icon: 'add_circle', color: 'text-green-500' },
+  withdrawal: { icon: 'remove_circle', color: 'text-red-500' },
+  contract_payment: { icon: 'handshake', color: 'text-blue-500' }
+}[t] || { icon: 'receipt_long', color: 'text-gray-400' })
+
+const typeLabel = (t) => ({
+  deposit: 'Dépôt',
+  withdrawal: 'Retrait',
+  contract_payment: 'Contrat'
+}[t] || t)
+
 const formatDate  = (d) => d ? new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'
 
 onMounted(load)
