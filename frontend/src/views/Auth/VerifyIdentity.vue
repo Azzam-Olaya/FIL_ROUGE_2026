@@ -61,17 +61,31 @@
               <div class="space-y-4">
                 <div class="relative">
                   <label class="block text-xs font-bold uppercase tracking-widest text-tertiary mb-1">Numéro de CIN / Passeport</label>
-                  <div class="flex items-center border-b border-outline-variant/40 focus-within:border-primary transition-colors py-2">
-                    <span class="material-symbols-outlined text-on-surface-variant mr-3">badge</span>
-                    <input v-model="form.id_number" class="bg-transparent border-none focus:ring-0 w-full text-on-surface placeholder:text-on-surface-variant/40 p-0 font-medium" placeholder="AB123456" type="text" required/>
+                  <div class="flex items-center border-b transition-colors py-2"
+                       :class="idNumberError ? 'border-red-400' : 'border-outline-variant/40 focus-within:border-primary'">
+                    <span class="material-symbols-outlined mr-3" :class="idNumberError ? 'text-red-400' : 'text-on-surface-variant'">badge</span>
+                    <input v-model="form.id_number"
+                           @input="validateIdNumber"
+                           class="bg-transparent border-none focus:ring-0 w-full text-on-surface placeholder:text-on-surface-variant/40 p-0 font-medium uppercase"
+                           placeholder="A12345 ou AA123456"
+                           type="text" required/>
                   </div>
+                  <p v-if="idNumberError" class="text-[10px] text-red-500 mt-1 font-bold">{{ idNumberError }}</p>
+                  <p v-else class="text-[10px] text-on-surface-variant mt-1 italic">Format accepté : A12345 (CIN) ou AA123456 (Passeport)</p>
                 </div>
                 <div class="relative">
                   <label class="block text-xs font-bold uppercase tracking-widest text-tertiary mb-1">Lieu de Naissance</label>
-                  <div class="flex items-center border-b border-outline-variant/40 focus-within:border-primary transition-colors py-2">
-                    <span class="material-symbols-outlined text-on-surface-variant mr-3">location_on</span>
-                    <input v-model="form.birthplace" class="bg-transparent border-none focus:ring-0 w-full text-on-surface placeholder:text-on-surface-variant/40 p-0 font-medium" placeholder="Casablanca, Maroc" type="text" required/>
+                  <div class="flex items-center border-b transition-colors py-2"
+                       :class="birthplaceError ? 'border-red-400' : 'border-outline-variant/40 focus-within:border-primary'">
+                    <span class="material-symbols-outlined mr-3" :class="birthplaceError ? 'text-red-400' : 'text-on-surface-variant'">location_on</span>
+                    <input v-model="form.birthplace"
+                           @input="validateBirthplace"
+                           class="bg-transparent border-none focus:ring-0 w-full text-on-surface placeholder:text-on-surface-variant/40 p-0 font-medium"
+                           placeholder="Casablanca"
+                           type="text" required/>
                   </div>
+                  <p v-if="birthplaceError" class="text-[10px] text-red-500 mt-1 font-bold">{{ birthplaceError }}</p>
+                  <p v-else class="text-[10px] text-on-surface-variant mt-1 italic">Lettres uniquement (espaces et tirets autorisés)</p>
                 </div>
               </div>
             </div>
@@ -112,6 +126,32 @@ const successMessage = ref('')
 const isDragging = ref(false)
 const selectedFile = ref(null)
 const fileInput = ref(null)
+const idNumberError = ref('')
+const birthplaceError = ref('')
+
+const CIN_REGEX = /^[A-Z]{1,2}\d{5,6}$/
+const BIRTHPLACE_REGEX = /^[a-zA-ZÀ-ɏ\s\-]+$/
+
+const validateIdNumber = () => {
+  const val = form.id_number.trim().toUpperCase()
+  form.id_number = val
+  if (!val) { idNumberError.value = ''; return }
+  if (!CIN_REGEX.test(val)) {
+    idNumberError.value = 'Format invalide. Exemples valides : A12345 ou AA123456'
+  } else {
+    idNumberError.value = ''
+  }
+}
+
+const validateBirthplace = () => {
+  const val = form.birthplace
+  if (!val) { birthplaceError.value = ''; return }
+  if (!BIRTHPLACE_REGEX.test(val)) {
+    birthplaceError.value = 'Le lieu de naissance ne doit contenir que des lettres.'
+  } else {
+    birthplaceError.value = ''
+  }
+}
 
 const form = reactive({
   id_number: '',
@@ -144,8 +184,15 @@ const handleDrop = (event) => {
 }
 
 const handleVerification = async () => {
+  validateIdNumber()
+  validateBirthplace()
+
   if (!selectedFile.value) {
     errorMessage.value = 'Veuillez sélectionner un document'
+    return
+  }
+  if (idNumberError.value || birthplaceError.value) {
+    errorMessage.value = 'Veuillez corriger les erreurs avant de continuer.'
     return
   }
 
