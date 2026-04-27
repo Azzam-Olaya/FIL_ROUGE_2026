@@ -10,17 +10,6 @@ use App\Http\Controllers\Api\Freelancer\FreelancerController;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-Route::get('/debug-logs', function () {
-    $path = storage_path('logs/laravel.log');
-    if (!file_exists($path)) return 'No log file';
-    
-    // Read the last 200 lines
-    $lines = file($path);
-    if (!$lines) return 'Empty log';
-    
-    return implode("", array_slice($lines, -200));
-});
-
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/user/verify', [AuthController::class, 'verifyIdentity']);
