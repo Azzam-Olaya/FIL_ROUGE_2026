@@ -11,7 +11,7 @@
           <span class="material-symbols-outlined text-primary text-2xl font-bold group-hover:scale-110 transition-transform">auto_awesome</span>
           <div class="flex flex-col">
             <span class="font-headline font-black italic text-lg md:text-xl text-primary tracking-tight leading-none">MorLancer Pro</span>
-            <span class="hidden sm:block text-[8px] md:text-[10px] opacity-60 font-bold uppercase tracking-[0.2em] leading-none mt-0.5">Artisanat Digital</span>
+            <span class="hidden sm:block text-[8px] md:text-[10px] opacity-60 font-bold uppercase tracking-[0.2em] leading-none mt-0.5">Administration</span>
           </div>
         </router-link>
       </div>
@@ -58,8 +58,11 @@
           <AdminStats v-if="activeTab === 'stats'" />
           <AdminUsers v-if="activeTab === 'users'" />
           <AdminCategories v-if="activeTab === 'categories'" />
+          <AdminContracts v-if="activeTab === 'contracts'" />
+          <AdminPayments v-if="activeTab === 'payments'" />
+          <AdminReports v-if="activeTab === 'reports'" />
 
-          <div v-if="['contracts', 'messages', 'reports'].includes(activeTab)" class="text-center py-20 bg-white/50 backdrop-blur-sm rounded-[2.5rem] border border-primary/5">
+          <div v-if="['reports'].includes(activeTab) && false" class="text-center py-20 bg-white/50 backdrop-blur-sm rounded-[2.5rem] border border-primary/5">
             <span class="material-symbols-outlined text-6xl text-on-surface-variant/30 mb-4 animate-bounce">construction</span>
             <p class="text-on-surface-variant font-medium">Module {{ activeTab }} - En développement</p>
           </div>
@@ -73,9 +76,12 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import AdminStats from '@/components/Admin/AdminStats.vue'
-import AdminUsers from '@/components/Admin/AdminUsers.vue'
+import AdminStats      from '@/components/Admin/AdminStats.vue'
+import AdminUsers      from '@/components/Admin/AdminUsers.vue'
 import AdminCategories from '@/components/Admin/AdminCategories.vue'
+import AdminContracts  from '@/components/Admin/AdminContracts.vue'
+import AdminPayments   from '@/components/Admin/AdminPayments.vue'
+import AdminReports    from '@/components/Admin/AdminReports.vue'
 
 const activeTab   = ref('stats')
 const sidebarOpen = ref(false)
@@ -85,34 +91,34 @@ const authStore   = useAuthStore()
 const navItems = [
   { tab: 'stats',      icon: 'dashboard',   label: 'Tableau de bord' },
   { tab: 'users',      icon: 'group',       label: 'Utilisateurs'    },
-  { tab: 'contracts',  icon: 'payments',    label: 'Contrats'        },
-  { tab: 'messages',   icon: 'chat_bubble', label: 'Messages'        },
+  { tab: 'contracts',  icon: 'handshake',   label: 'Contrats'        },
+  { tab: 'payments',   icon: 'payments',    label: 'Paiements'       },
   { tab: 'categories', icon: 'category',    label: 'Catégories'      },
   { tab: 'reports',    icon: 'report',      label: 'Signalements'    },
 ]
 
 const getTabTitle = () => {
   const titles = {
-    stats: 'Vue d\'ensemble',
-    users: 'Gestion des Utilisateurs',
-    contracts: 'Gestion des Contrats',
-    messages: 'Contrôle des Conversations',
+    stats:      'Vue d\'ensemble',
+    users:      'Gestion des Utilisateurs',
+    contracts:  'Statistiques Contrats',
+    payments:   'Statistiques Paiements',
     categories: 'Gestion des Catégories',
-    reports: 'Gestion des Signalements'
+    reports:    'Gestion des Signalements'
   }
   return titles[activeTab.value] || 'Vue d\'ensemble'
 }
 
 const getTabDescription = () => {
   const descriptions = {
-    stats: 'Suivi de l\'écosystème artisanal digital',
-    users: 'Validation et gestion des comptes utilisateurs',
-    contracts: 'Supervision des contrats et transactions',
-    messages: 'Modération des conversations et échanges',
+    stats:      'Suivi de l\'écosystème MorLancer',
+    users:      'Validation et gestion des comptes utilisateurs',
+    contracts:  'Statuts, volumes et top freelancers',
+    payments:   'Dépôts, transactions et revenus plateforme',
     categories: 'Organisation des catégories de services',
-    reports: 'Traitement des signalements et litiges'
+    reports:    'Traitement des signalements et litiges'
   }
-  return descriptions[activeTab.value] || 'Suivi de l\'écosystème artisanal digital'
+  return descriptions[activeTab.value] || 'Suivi de l\'écosystème MorLancer'
 }
 
 const handleLogout = () => {
