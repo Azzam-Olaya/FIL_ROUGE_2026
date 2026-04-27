@@ -239,7 +239,7 @@ const iconName = (t) => ({ like: 'favorite', comment: 'comment', message: 'chat_
 const initials = (n) => n?.split(' ').map(x => x[0]).join('').toUpperCase().slice(0, 2) || 'U'
 
 const goToBrief = (brief) => {
-  showFavorites.value = false
+  favOpen.value = false
   router.push({ path: '/client/dashboard', query: { tab: 'dashboard', briefId: brief.id } })
 }
 

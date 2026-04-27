@@ -41,10 +41,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/categories', [FreelancerController::class, 'getCategories']);
         Route::post('/missions', [ClientController::class, 'storeMission']);
         Route::get('/missions', [ClientController::class, 'getMyMissions']);
-        Route::get('/missions/{id}/comments', [ClientController::class, 'getMissionComments']);
-        Route::get('/missions/{id}/likes', [ClientController::class, 'getMissionLikes']);
         Route::get('/stats', [ClientController::class, 'getStats']);
-        Route::get('/payments', [ClientController::class, 'getPayments']);
         Route::get('/briefs', [ClientController::class, 'getBriefs']);
         Route::post('/briefs/{id}/like', [ClientController::class, 'toggleLike']);
         Route::post('/briefs/{id}/comment', [ClientController::class, 'addComment']);
@@ -52,8 +49,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/briefs/{id}/favorite', [ClientController::class, 'toggleFavorite']);
         Route::get('/favorites', [ClientController::class, 'getMyFavorites']);
         Route::get('/notifications', [ClientController::class, 'getNotifications']);
-        Route::post('/notifications/read', [ClientController::class, 'markAllRead']);
-        Route::patch('/notifications/{id}/read', [ClientController::class, 'markOneRead']);
         Route::get('/missions/{id}/applications', [ClientController::class, 'getApplications']);
         Route::post('/applications/{id}/accept', [ClientController::class, 'acceptApplication']);
         Route::post('/test-credit', [ClientController::class, 'testCredit']);
@@ -61,8 +56,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Freelancer
     Route::prefix('freelancer')->group(function () {
-        Route::get('/stats', [FreelancerController::class, 'getStats']);
-        Route::get('/balance', [FreelancerController::class, 'getBalance']);
         Route::get('/briefs', [FreelancerController::class, 'getBriefs']);
         Route::get('/briefs/mine', [FreelancerController::class, 'getMyBriefs']);
         Route::post('/briefs', [FreelancerController::class, 'storeBrief']);
@@ -71,19 +64,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/briefs/{id}/comments', [FreelancerController::class, 'getComments']);
         Route::post('/briefs/{id}/favorite', [FreelancerController::class, 'toggleFavorite']);
         Route::get('/missions', [FreelancerController::class, 'getAvailableMissions']);
-        Route::get('/missions/active', [FreelancerController::class, 'getActiveMissions']);
         Route::get('/missions/favorites', [FreelancerController::class, 'getMyMissionFavorites']);
         Route::post('/missions/{id}/like', [FreelancerController::class, 'toggleMissionLike']);
         Route::post('/missions/{id}/favorite', [FreelancerController::class, 'toggleMissionFavorite']);
         Route::post('/missions/{id}/comment', [FreelancerController::class, 'addMissionComment']);
         Route::get('/missions/{id}/comments', [FreelancerController::class, 'getMissionComments']);
         Route::get('/favorites', [FreelancerController::class, 'getMyFavorites']);
-        Route::get('/payments', [FreelancerController::class, 'getPayments']);
-        Route::get('/profile', [FreelancerController::class, 'getProfile']);
-        Route::put('/profile', [FreelancerController::class, 'updateProfile']);
-        Route::put('/profile/password', [FreelancerController::class, 'changePassword']);
         Route::get('/notifications', [FreelancerController::class, 'getNotifications']);
-        Route::get('/suggested', [FreelancerController::class, 'getSuggestedFreelancers']);
         Route::get('/categories', [FreelancerController::class, 'getCategories']);
         Route::post('/missions/{id}/apply', [FreelancerController::class, 'applyToMission']);
     });
@@ -92,11 +79,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/conversations', [\App\Http\Controllers\Api\MessageController::class, 'getConversations']);
     Route::get('/conversations/{userId}', [\App\Http\Controllers\Api\MessageController::class, 'getMessages']);
     Route::post('/messages', [\App\Http\Controllers\Api\MessageController::class, 'sendMessage']);
-    Route::get('/contracts/{id}/messages', [\App\Http\Controllers\Api\MessageController::class, 'getConversation']);
 
     // Contracts
     Route::post('/contracts', [\App\Http\Controllers\Api\ContractController::class, 'store']);
-    Route::put('/contracts/{id}', [\App\Http\Controllers\Api\ContractController::class, 'update']);
     Route::post('/contracts/{id}/complete', [\App\Http\Controllers\Api\ContractController::class, 'complete']);
     Route::post('/contracts/{id}/refund', [\App\Http\Controllers\Api\ContractController::class, 'refund']);
     Route::get('/contracts/client', [\App\Http\Controllers\Api\ContractController::class, 'clientContracts']);
@@ -106,7 +91,5 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Wallet
     Route::get('/wallet/summary', [\App\Http\Controllers\Api\WalletController::class, 'getSummary']);
-    Route::get('/wallet/history', [\App\Http\Controllers\Api\WalletController::class, 'getHistory']);
-    Route::post('/wallet/deposit', [\App\Http\Controllers\Api\WalletController::class, 'addFunds']);
     Route::post('/wallet/paypal/capture', [\App\Http\Controllers\Api\WalletController::class, 'capturePayPalOrder']);
 });
