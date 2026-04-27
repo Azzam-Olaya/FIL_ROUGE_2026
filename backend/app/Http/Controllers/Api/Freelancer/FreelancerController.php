@@ -198,12 +198,12 @@ class FreelancerController extends Controller
     // Likes
     public function toggleLike(Request $request, $id)
     {
-        $existing = BriefLike::where(['portfolio_id' => $id, 'user_id' => $request->user()->id])->first();
+        $existing = BriefLike::where(['brief_id' => $id, 'user_id' => $request->user()->id])->first();
         if ($existing) {
             $existing->delete();
             return response()->json(['liked' => false]);
         }
-        BriefLike::create(['portfolio_id' => $id, 'user_id' => $request->user()->id]);
+        BriefLike::create(['brief_id' => $id, 'user_id' => $request->user()->id]);
         return response()->json(['liked' => true]);
     }
 
@@ -212,7 +212,7 @@ class FreelancerController extends Controller
     {
         $request->validate(['body' => 'required|string|max:500']);
         $comment = BriefComment::create([
-            'portfolio_id' => $id,
+            'brief_id' => $id,
             'user_id'      => $request->user()->id,
             'body'         => $request->body,
         ]);
@@ -222,19 +222,19 @@ class FreelancerController extends Controller
     public function getComments($id)
     {
         return response()->json(
-            BriefComment::where('portfolio_id', $id)->with('user')->latest()->get()
+            BriefComment::where('brief_id', $id)->with('user')->latest()->get()
         );
     }
 
     // Favorites
     public function toggleFavorite(Request $request, $id)
     {
-        $existing = BriefFavorite::where(['portfolio_id' => $id, 'user_id' => $request->user()->id])->first();
+        $existing = BriefFavorite::where(['brief_id' => $id, 'user_id' => $request->user()->id])->first();
         if ($existing) {
             $existing->delete();
             return response()->json(['favorited' => false]);
         }
-        BriefFavorite::create(['portfolio_id' => $id, 'user_id' => $request->user()->id]);
+        BriefFavorite::create(['brief_id' => $id, 'user_id' => $request->user()->id]);
         return response()->json(['favorited' => true]);
     }
 
