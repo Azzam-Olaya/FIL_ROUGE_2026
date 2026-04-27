@@ -69,7 +69,7 @@
                 </span>
               </td>
               <td class="px-6 py-4 text-right">
-                <div class="flex justify-end gap-2">
+                <div v-if="user.id !== currentUserId" class="flex justify-end gap-2">
                   <button v-if="user.verification_status === 'pending'"
                           @click="approveUser(user.id)"
                           title="Approuver"
@@ -88,7 +88,14 @@
                           class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                     <span class="material-symbols-outlined">block</span>
                   </button>
+                  <button v-if="user.verification_status === 'banned'"
+                          @click="unbanUser(user.id)"
+                          title="Débannir"
+                          class="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors">
+                    <span class="material-symbols-outlined">lock_open</span>
+                  </button>
                 </div>
+                <span v-else class="text-xs text-gray-400 italic">Vous</span>
               </td>
             </tr>
             <tr v-if="users.length === 0">
@@ -104,8 +111,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import api from '@/api/axios'
+import { useAuthStore } from '@/stores/auth'
+
+const authStore = useAuthStore()
+const currentUserId = computed(() => authStore.user?.id)
 
 const users = ref([])
 const filters = ref({ role: '', status: '' })
@@ -144,6 +155,13 @@ const banUser = async (id) => {
       await api.post(`/admin/users/${id}/ban`)
       loadUsers()
     }
+  } catch (e) { alert(e.response?.data?.message || 'Erreur') }
+}
+
+const unbanUser = async (id) => {
+  try {
+    await api.post(`/admin/users/${id}/approve`)
+    loadUsers()
   } catch (e) { alert(e.response?.data?.message || 'Erreur') }
 }
 
