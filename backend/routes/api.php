@@ -38,7 +38,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post("/categories", [AdminController::class, "createCategory"]);
         Route::put("/categories/{id}", [AdminController::class, "updateCategory"]);
         Route::delete("/categories/{id}", [AdminController::class, "deleteCategory"]);
+        // Signalements
+        Route::get('/reports', [\App\Http\Controllers\Api\ReportController::class, 'index']);
+        Route::post('/reports/{id}/dismiss', [\App\Http\Controllers\Api\ReportController::class, 'dismiss']);
+        Route::post('/reports/{id}/ban', [\App\Http\Controllers\Api\ReportController::class, 'ban']);
     });
+
+    // Signalement (client & freelancer)
+    Route::post('/reports', [\App\Http\Controllers\Api\ReportController::class, 'store']);
 
     // Client
     Route::prefix('client')->group(function () {
