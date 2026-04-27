@@ -45,7 +45,9 @@
             <button @click="resetFilters" class="mt-4 text-primary text-sm font-bold hover:underline">Effacer les filtres</button>
           </div>
           <div v-else class="flex flex-col gap-6">
-            <BriefCard v-for="brief in briefs" :key="brief.id" :brief="brief" />
+            <div v-for="brief in briefs" :key="brief.id" :id="'brief-' + brief.id">
+              <BriefCard :brief="brief" />
+            </div>
           </div>
         </div>
 
@@ -371,6 +373,15 @@ const handleTabEvent = (e) => { activeTab.value = e.detail }
 const handleOpenConv  = (e) => { pendingConversation.value = e.detail; activeTab.value = 'messages' }
 
 watch(() => route.query.tab, (t) => { if (t) activeTab.value = t })
+
+watch(() => route.query.briefId, (id) => {
+  if (id && activeTab.value === 'dashboard') {
+    setTimeout(() => {
+      const el = document.getElementById(`brief-${id}`)
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 600)
+  }
+}, { immediate: true })
 watch(activeTab, (t) => {
   if (t === 'briefs') loadMyMissions()
   if (t === 'profile') store.fetchStats()
