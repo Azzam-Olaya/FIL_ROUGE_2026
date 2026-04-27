@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-surface font-body text-on-surface flex flex-col overflow-x-hidden">
     
-    <!-- Top Bar for Admin -->
+    <!-- Top Bar -->
     <header class="bg-white border-b border-primary/10 flex justify-between items-center w-full px-4 md:px-8 py-4 sticky top-0 z-50 h-16">
       <div class="flex items-center gap-4">
         <button @click="sidebarOpen = !sidebarOpen" class="p-2 -ml-2 text-on-surface-variant lg:hidden hover:bg-primary/10 rounded-full transition-colors">
@@ -29,10 +29,9 @@
     </header>
 
     <div class="flex flex-1 overflow-x-hidden">
-      <!-- Mobile Overlay -->
       <div v-if="sidebarOpen" @click="sidebarOpen = false" class="fixed inset-0 bg-black/50 z-30 lg:hidden"></div>
 
-      <!-- Barre Latérale (Admin) -->
+      <!-- Sidebar -->
       <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
         class="h-screen w-64 fixed left-0 top-0 bg-white border-r border-primary/5 flex flex-col gap-2 pt-24 pb-8 z-40 shadow-xl shadow-primary/5 transition-transform duration-300 lg:translate-x-0">
         <nav class="flex flex-col gap-2">
@@ -46,18 +45,18 @@
         </nav>
       </aside>
 
-      <!-- Contenu Principal -->
+      <!-- Main -->
       <main class="lg:ml-64 p-4 md:p-8 min-h-screen zellige-pattern flex-1 transition-all duration-300">
         <header class="mb-8 md:mb-12">
           <h2 class="font-headline text-3xl md:text-5xl font-black text-primary tracking-tight">{{ getTabTitle() }}</h2>
           <p class="text-on-surface-variant mt-2 text-base md:text-lg font-medium italic">{{ getTabDescription() }}</p>
         </header>
 
-        <!-- Contenu selon l'onglet actif -->
         <div class="space-y-6">
-          <AdminStats v-if="activeTab === 'stats'" />
-          <AdminUsers v-if="activeTab === 'users'" />
+          <AdminStats      v-if="activeTab === 'stats'"      />
+          <AdminUsers      v-if="activeTab === 'users'"      />
           <AdminCategories v-if="activeTab === 'categories'" />
+<<<<<<< HEAD
           <AdminContracts v-if="activeTab === 'contracts'" />
           <AdminPayments v-if="activeTab === 'payments'" />
           <AdminReports v-if="activeTab === 'reports'" />
@@ -66,6 +65,11 @@
             <span class="material-symbols-outlined text-6xl text-on-surface-variant/30 mb-4 animate-bounce">construction</span>
             <p class="text-on-surface-variant font-medium">Module {{ activeTab }} - En développement</p>
           </div>
+=======
+          <AdminContracts  v-if="activeTab === 'contracts'"  />
+          <AdminPayments   v-if="activeTab === 'payments'"   />
+          <AdminReports    v-if="activeTab === 'reports'"    />
+>>>>>>> 139113f (commit)
         </div>
       </main>
     </div>
@@ -89,6 +93,7 @@ const router      = useRouter()
 const authStore   = useAuthStore()
 
 const navItems = [
+<<<<<<< HEAD
   { tab: 'stats',      icon: 'dashboard',   label: 'Tableau de bord' },
   { tab: 'users',      icon: 'group',       label: 'Utilisateurs'    },
   { tab: 'contracts',  icon: 'handshake',   label: 'Contrats'        },
@@ -120,6 +125,33 @@ const getTabDescription = () => {
   }
   return descriptions[activeTab.value] || 'Suivi de l\'écosystème MorLancer'
 }
+=======
+  { tab: 'stats',      icon: 'dashboard',  label: 'Tableau de bord' },
+  { tab: 'users',      icon: 'group',      label: 'Utilisateurs'    },
+  { tab: 'contracts',  icon: 'handshake',  label: 'Contrats'        },
+  { tab: 'payments',   icon: 'payments',   label: 'Paiements'       },
+  { tab: 'categories', icon: 'category',   label: 'Catégories'      },
+  { tab: 'reports',    icon: 'report',     label: 'Signalements'    },
+]
+
+const getTabTitle = () => ({
+  stats:      'Vue d\'ensemble',
+  users:      'Gestion des Utilisateurs',
+  contracts:  'Statistiques Contrats',
+  payments:   'Statistiques Paiements',
+  categories: 'Gestion des Catégories',
+  reports:    'Gestion des Signalements',
+}[activeTab.value] || 'Vue d\'ensemble')
+
+const getTabDescription = () => ({
+  stats:      'Suivi de l\'écosystème MorLancer',
+  users:      'Validation et gestion des comptes utilisateurs',
+  contracts:  'Statuts, volumes et top freelancers',
+  payments:   'Dépôts, transactions et revenus plateforme',
+  categories: 'Organisation des catégories de services',
+  reports:    'Traitement des signalements et litiges',
+}[activeTab.value] || 'Suivi de l\'écosystème MorLancer')
+>>>>>>> 139113f (commit)
 
 const handleLogout = () => {
   authStore.clearAuth()
@@ -128,15 +160,6 @@ const handleLogout = () => {
 </script>
 
 <style scoped>
-.zellige-pattern {
-  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l5 25h25l-20 15 8 20-18-12-18 12 8-20L0 25h25z' fill='%23006233' fill-opacity='0.03' fill-rule='evenodd'/%3E%3C/svg%3E");
-}
-</style>
-
-<style scoped>
-/**
- * Motif Zellige (Fleurs d'étoiles) pour le Dashboard Admin.
- */
 .zellige-pattern {
   background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l5 25h25l-20 15 8 20-18-12-18 12 8-20L0 25h25z' fill='%23006233' fill-opacity='0.03' fill-rule='evenodd'/%3E%3C/svg%3E");
 }
