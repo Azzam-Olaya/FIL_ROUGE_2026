@@ -38,36 +38,13 @@
             </div>
           </header>
 
-          <!-- Brief feed filters -->
-          <div class="bg-white rounded-[2rem] border border-primary/10 p-6 shadow-sm space-y-4">
-            <div class="flex flex-col md:flex-row gap-4">
-              <div class="flex-1 relative">
-                <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
-                <input v-model="filters.search" placeholder="Rechercher un brief..." 
-                  class="w-full pl-12 pr-4 py-3 bg-surface-container border border-primary/5 rounded-2xl text-sm focus:outline-none focus:border-primary transition-all" />
-              </div>
-              <div class="flex gap-4">
-                <select v-model="filters.category_id" 
-                  class="bg-surface-container border border-primary/5 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-primary transition-all min-w-[160px]">
-                  <option :value="null">Toutes catégories</option>
-                  <option v-for="c in rootCategories" :key="c.id" :value="c.id">{{ c.name }}</option>
-                </select>
-                <select v-if="subCategories.length" v-model="filters.sub_category_id"
-                  class="bg-surface-container border border-primary/5 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-primary transition-all min-w-[160px]">
-                  <option :value="null">Toutes spécialités</option>
-                  <option v-for="c in subCategories" :key="c.id" :value="c.id">{{ c.name }}</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
           <!-- Brief feed -->
           <div v-if="!loading && briefs.length === 0" class="text-center py-20 bg-white rounded-[2rem] border border-primary/5">
             <span class="material-symbols-outlined text-5xl text-gray-300 block mb-3">search_off</span>
             <p class="text-gray-400 font-medium">Aucun brief ne correspond à votre recherche.</p>
             <button @click="resetFilters" class="mt-4 text-primary text-sm font-bold hover:underline">Effacer les filtres</button>
           </div>
-          <div v-else class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <div v-else class="flex flex-col gap-6">
             <BriefCard v-for="brief in briefs" :key="brief.id" :brief="brief" />
           </div>
         </div>
