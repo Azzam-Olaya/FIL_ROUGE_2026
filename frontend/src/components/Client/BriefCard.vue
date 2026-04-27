@@ -32,13 +32,9 @@
     <!-- Post Body: title + full description -->
     <div class="px-6 pb-4">
       <h3 class="font-headline text-lg font-bold text-on-surface mb-2">{{ brief.title }}</h3>
-      <p class="text-on-surface-variant text-sm leading-relaxed" :class="expanded ? '' : 'line-clamp-3'">
+      <p class="text-on-surface-variant text-sm leading-relaxed line-clamp-3">
         {{ brief.description }}
       </p>
-      <button v-if="brief.description?.length > 180" @click="expanded = !expanded"
-        class="text-primary text-xs font-bold mt-1 hover:underline">
-        {{ expanded ? 'Voir moins' : 'Voir plus' }}
-      </button>
     </div>
 
     <!-- Counters bar -->
