@@ -44,6 +44,13 @@
           <p class="text-[10px] text-on-surface-variant capitalize">{{ selectedUser.role || 'Utilisateur' }}</p>
         </div>
 
+        <!-- Signaler l'utilisateur -->
+        <button @click="showReportModal = true"
+          class="flex-shrink-0 p-2 rounded-xl text-on-surface-variant hover:bg-red-50 hover:text-red-500 transition-all"
+          title="Signaler cet utilisateur">
+          <span class="material-symbols-outlined text-lg">flag</span>
+        </button>
+
         <!-- NEW: Lancer Contrat Button (Visible only to Clients) -->
         <button v-if="isClient" @click="showContractModal = true"
           class="flex-shrink-0 px-4 py-2 rounded-xl bg-primary text-white font-bold text-[10px] uppercase tracking-widest flex items-center gap-2 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/20">
@@ -101,6 +108,55 @@
       @close="showContractModal = false"
       @success="onContractCreated"
     />
+
+    <!-- Report Modal -->
+    <Teleport to="body">
+      <div v-if="showReportModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" @click.self="showReportModal = false">
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-md p-8 animate-in">
+          <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
+                <span class="material-symbols-outlined text-red-500">flag</span>
+              </div>
+              <h2 class="font-headline text-xl font-bold text-on-surface">Signaler {{ selectedUser?.name }}</h2>
+            </div>
+            <button @click="showReportModal = false" class="p-2 hover:bg-primary/10 rounded-full transition-colors">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+
+          <form @submit.prevent="submitReport" class="space-y-4">
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-2">Raison *</label>
+              <div class="grid grid-cols-2 gap-2">
+                <button type="button" v-for="r in reportReasons" :key="r"
+                  @click="reportForm.reason = r"
+                  :class="reportForm.reason === r ? 'bg-red-500 text-white border-red-500' : 'bg-surface-container text-on-surface-variant border-primary/10'"
+                  class="px-3 py-2 rounded-xl text-xs font-bold border transition-all text-left">
+                  {{ r }}
+                </button>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-widest text-on-surface-variant mb-1">Détails (optionnel)</label>
+              <textarea v-model="reportForm.details" rows="3" placeholder="Décrivez le problème..."
+                class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-red-400 transition-colors resize-none"></textarea>
+            </div>
+            <div v-if="reportError" class="text-xs text-red-500 font-medium">{{ reportError }}</div>
+            <div v-if="reportSuccess" class="text-xs text-green-600 font-medium">{{ reportSuccess }}</div>
+            <div class="flex gap-3 pt-2">
+              <button type="button" @click="showReportModal = false"
+                class="flex-1 px-4 py-2.5 rounded-full border border-primary text-primary font-bold text-sm hover:bg-primary/5 transition-colors">Annuler</button>
+              <button type="submit" :disabled="!reportForm.reason || submittingReport"
+                class="flex-1 px-4 py-2.5 rounded-full bg-red-500 text-white font-bold text-sm disabled:opacity-50 hover:scale-105 transition-transform flex items-center justify-center gap-2">
+                <span v-if="submittingReport" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                <span v-else>Envoyer le signalement</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -113,6 +169,32 @@ import ContractModal from '@/components/Client/ContractModal.vue'
 const authStore = useAuthStore()
 const isClient = computed(() => authStore.userRole === 'client')
 const showContractModal = ref(false)
+
+// ── Report ─────────────────────────────────────────────────────────────────
+const showReportModal   = ref(false)
+const submittingReport  = ref(false)
+const reportError       = ref('')
+const reportSuccess     = ref('')
+const reportForm        = ref({ reason: '', details: '' })
+const reportReasons     = ['Comportement abusif', 'Spam', 'Arnaque / Fraude', 'Contenu inapproprié', 'Faux profil', 'Autre']
+
+const submitReport = async () => {
+  reportError.value   = ''
+  reportSuccess.value = ''
+  submittingReport.value = true
+  try {
+    await api.post('/reports', {
+      reported_id: selectedUser.value.user_id,
+      reason:      reportForm.value.reason,
+      details:     reportForm.value.details,
+    })
+    reportSuccess.value = 'Signalement envoyé. L\'admin examinera votre demande.'
+    reportForm.value = { reason: '', details: '' }
+    setTimeout(() => { showReportModal.value = false; reportSuccess.value = '' }, 2000)
+  } catch (e) {
+    reportError.value = e.response?.data?.message || 'Erreur lors de l\'envoi.'
+  } finally { submittingReport.value = false }
+}
 
 const props = defineProps({ autoOpen: { type: Object, default: null } })
 const emit  = defineEmits(['opened'])
