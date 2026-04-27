@@ -70,7 +70,14 @@ const props    = defineProps({ role: { type: String, default: 'freelancer' } })
 const payments = ref([])
 const loading  = ref(false)
 
-const totalAmount    = computed(() => payments.value.reduce((s, p) => s + Number(p.amount || 0), 0))
+const totalAmount    = computed(() => {
+  if (props.role === 'freelancer') {
+    return payments.value
+      .filter(p => p.status === 'completed' && p.type === 'contract_payment')
+      .reduce((s, p) => s + Number(p.amount || 0) * 0.9, 0)
+  }
+  return payments.value.reduce((s, p) => s + Number(p.amount || 0), 0)
+})
 const completedCount = computed(() => payments.value.filter(p => p.status === 'completed').length)
 const endpoint       = computed(() => props.role === 'freelancer' ? '/freelancer/payments' : '/client/payments')
 
