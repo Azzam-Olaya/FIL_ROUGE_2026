@@ -1,0 +1,173 @@
+@startuml MorLancer_UseCase_Diagram
+
+skinparam actorStyle awesome
+skinparam usecaseBackgroundColor #FAFAFA
+skinparam usecaseBorderColor #006233
+skinparam arrowColor #006233
+skinparam actorBorderColor #006233
+skinparam packageBackgroundColor #F0F7F0
+skinparam packageBorderColor #006233
+
+' ─────────────────────────────────────────
+' ACTEURS
+' ─────────────────────────────────────────
+actor "Visiteur" as Visiteur
+actor "Client" as Client
+actor "Freelancer" as Freelancer
+actor "Admin" as Admin
+
+' ─────────────────────────────────────────
+' VISITEUR
+' ─────────────────────────────────────────
+package "Accès Public" {
+    (Consulter la page d'accueil) as UC_HOME
+    (S'inscrire) as UC_REGISTER
+    (Se connecter) as UC_LOGIN
+}
+
+' ─────────────────────────────────────────
+' ONBOARDING
+' ─────────────────────────────────────────
+package "Onboarding" {
+    (Vérifier son identité) as UC_VERIFY
+    (Uploader un document CIN/Passeport) as UC_UPLOAD
+    (Attendre la validation admin) as UC_WAIT
+}
+
+' ─────────────────────────────────────────
+' CLIENT
+' ─────────────────────────────────────────
+package "Espace Client" {
+    (Explorer les Briefs) as UC_BROWSE_BRIEFS
+    (Rechercher un Brief) as UC_SEARCH_BRIEF
+    (Liker un Brief) as UC_LIKE_BRIEF
+    (Commenter un Brief) as UC_COMMENT_BRIEF
+    (Mettre un Brief en favori) as UC_FAV_BRIEF
+    (Contacter un Freelancer) as UC_CONTACT_FL
+    (Publier une mission) as UC_POST_MISSION
+    (Gérer ses missions) as UC_MANAGE_MISSIONS
+    (Lancer un contrat) as UC_CREATE_CONTRACT
+    (Valider une livraison) as UC_COMPLETE
+    (Demander un remboursement) as UC_REFUND
+    (Déposer des fonds via PayPal) as UC_DEPOSIT
+    (Consulter son wallet) as UC_WALLET_CLI
+    (Signaler un utilisateur) as UC_REPORT_CLI
+}
+
+' ─────────────────────────────────────────
+' FREELANCER
+' ─────────────────────────────────────────
+package "Espace Freelancer" {
+    (Explorer les missions) as UC_BROWSE_MISSIONS
+    (Rechercher une mission) as UC_SEARCH_MISSION
+    (Liker une mission) as UC_LIKE_MISSION
+    (Commenter une mission) as UC_COMMENT_MISSION
+    (Mettre une mission en favori) as UC_FAV_MISSION
+    (Contacter un Client) as UC_CONTACT_CLI
+    (Publier un Brief) as UC_POST_BRIEF
+    (Gérer ses Briefs) as UC_MANAGE_BRIEFS
+    (Accepter une proposition de contrat) as UC_ACCEPT_CONTRACT
+    (Refuser une proposition de contrat) as UC_REJECT_CONTRACT
+    (Consulter ses contrats) as UC_CONTRACTS_FL
+    (Consulter son wallet) as UC_WALLET_FL
+    (Signaler un utilisateur) as UC_REPORT_FL
+}
+
+' ─────────────────────────────────────────
+' MESSAGERIE (partagée)
+' ─────────────────────────────────────────
+package "Messagerie" {
+    (Envoyer un message) as UC_SEND_MSG
+    (Consulter ses conversations) as UC_CONVS
+}
+
+' ─────────────────────────────────────────
+' ADMIN
+' ─────────────────────────────────────────
+package "Espace Admin" {
+    (Consulter les statistiques) as UC_STATS
+    (Approuver un compte) as UC_APPROVE
+    (Rejeter un compte) as UC_REJECT
+    (Bannir un utilisateur) as UC_BAN
+    (Débannir un utilisateur) as UC_UNBAN
+    (Gérer les catégories) as UC_CATEGORIES
+    (Consulter les contrats) as UC_CONTRACTS_ADM
+    (Consulter les paiements) as UC_PAYMENTS_ADM
+    (Traiter un signalement) as UC_HANDLE_REPORT
+    (Ignorer un signalement) as UC_DISMISS_REPORT
+}
+
+' ─────────────────────────────────────────
+' RELATIONS VISITEUR
+' ─────────────────────────────────────────
+Visiteur --> UC_HOME
+Visiteur --> UC_REGISTER
+Visiteur --> UC_LOGIN
+
+' ─────────────────────────────────────────
+' RELATIONS ONBOARDING
+' ─────────────────────────────────────────
+Client --> UC_VERIFY
+Freelancer --> UC_VERIFY
+UC_VERIFY ..> UC_UPLOAD : <<include>>
+UC_VERIFY ..> UC_WAIT : <<include>>
+
+' ─────────────────────────────────────────
+' RELATIONS CLIENT
+' ─────────────────────────────────────────
+Client --> UC_BROWSE_BRIEFS
+Client --> UC_POST_MISSION
+Client --> UC_MANAGE_MISSIONS
+Client --> UC_CREATE_CONTRACT
+Client --> UC_COMPLETE
+Client --> UC_REFUND
+Client --> UC_DEPOSIT
+Client --> UC_WALLET_CLI
+Client --> UC_REPORT_CLI
+Client --> UC_CONVS
+Client --> UC_SEND_MSG
+
+UC_BROWSE_BRIEFS ..> UC_SEARCH_BRIEF : <<extend>>
+UC_BROWSE_BRIEFS ..> UC_LIKE_BRIEF : <<extend>>
+UC_BROWSE_BRIEFS ..> UC_COMMENT_BRIEF : <<extend>>
+UC_BROWSE_BRIEFS ..> UC_FAV_BRIEF : <<extend>>
+UC_BROWSE_BRIEFS ..> UC_CONTACT_FL : <<extend>>
+UC_CREATE_CONTRACT ..> UC_SEND_MSG : <<include>>
+
+' ─────────────────────────────────────────
+' RELATIONS FREELANCER
+' ─────────────────────────────────────────
+Freelancer --> UC_BROWSE_MISSIONS
+Freelancer --> UC_POST_BRIEF
+Freelancer --> UC_MANAGE_BRIEFS
+Freelancer --> UC_ACCEPT_CONTRACT
+Freelancer --> UC_REJECT_CONTRACT
+Freelancer --> UC_CONTRACTS_FL
+Freelancer --> UC_WALLET_FL
+Freelancer --> UC_REPORT_FL
+Freelancer --> UC_CONVS
+Freelancer --> UC_SEND_MSG
+
+UC_BROWSE_MISSIONS ..> UC_SEARCH_MISSION : <<extend>>
+UC_BROWSE_MISSIONS ..> UC_LIKE_MISSION : <<extend>>
+UC_BROWSE_MISSIONS ..> UC_COMMENT_MISSION : <<extend>>
+UC_BROWSE_MISSIONS ..> UC_FAV_MISSION : <<extend>>
+UC_BROWSE_MISSIONS ..> UC_CONTACT_CLI : <<extend>>
+
+' ─────────────────────────────────────────
+' RELATIONS ADMIN
+' ─────────────────────────────────────────
+Admin --> UC_STATS
+Admin --> UC_APPROVE
+Admin --> UC_REJECT
+Admin --> UC_BAN
+Admin --> UC_UNBAN
+Admin --> UC_CATEGORIES
+Admin --> UC_CONTRACTS_ADM
+Admin --> UC_PAYMENTS_ADM
+Admin --> UC_HANDLE_REPORT
+
+UC_HANDLE_REPORT ..> UC_DISMISS_REPORT : <<extend>>
+UC_HANDLE_REPORT ..> UC_BAN : <<extend>>
+
+@enduml
