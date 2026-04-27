@@ -16,8 +16,8 @@
                 <h1 class="font-headline font-black italic text-4xl text-primary tracking-tight">MorLancer</h1>
               </router-link>
             </div>
-            <h2 class="font-headline text-2xl font-bold text-on-surface mb-2">Rejoindre la Communauté</h2>
-            <p class="text-on-surface-variant font-medium">Choisissez votre rôle et commencez votre voyage artisanal.</p>
+            <h2 class="font-headline text-2xl font-bold text-on-surface mb-2">Créer mon compte</h2>
+            <p class="text-on-surface-variant font-medium">Choisissez votre rôle et rejoignez MorLancer.</p>
           </div>
 
           <form @submit.prevent="handleRegister" class="w-full space-y-8">
@@ -28,14 +28,14 @@
                    class="p-6 rounded-2xl border-2 cursor-pointer transition-all hover:border-primary/40 text-center flex flex-col items-center group">
                 <span class="material-symbols-outlined text-4xl mb-2 transition-transform group-hover:scale-110" :class="form.role_name === 'client' ? 'text-primary' : 'text-on-surface-variant'">business_center</span>
                 <span class="font-headline font-bold text-lg" :class="form.role_name === 'client' ? 'text-primary' : 'text-on-surface'">Client</span>
-                <p class="text-[10px] uppercase font-bold tracking-widest mt-1 opacity-70">Recruter des talents</p>
+                <p class="text-[10px] uppercase font-bold tracking-widest mt-1 opacity-70">Publier des missions</p>
               </div>
               <div @click="form.role_name = 'freelancer'" 
                    :class="form.role_name === 'freelancer' ? 'border-secondary bg-secondary/5 ring-2 ring-secondary/20' : 'border-outline-variant/20 bg-surface-container/30'" 
                    class="p-6 rounded-2xl border-2 cursor-pointer transition-all hover:border-secondary/40 text-center flex flex-col items-center group">
-                <span class="material-symbols-outlined text-4xl mb-2 transition-transform group-hover:scale-110" :class="form.role_name === 'freelancer' ? 'text-secondary' : 'text-on-surface-variant'">architecture</span>
-                <span class="font-headline font-bold text-lg" :class="form.role_name === 'freelancer' ? 'text-secondary' : 'text-on-surface'">Freelance</span>
-                <p class="text-[10px] uppercase font-bold tracking-widest mt-1 opacity-70">Offrir mon savoir-faire</p>
+                <span class="material-symbols-outlined text-4xl mb-2 transition-transform group-hover:scale-110" :class="form.role_name === 'freelancer' ? 'text-secondary' : 'text-on-surface-variant'">work</span>
+                <span class="font-headline font-bold text-lg" :class="form.role_name === 'freelancer' ? 'text-secondary' : 'text-on-surface'">Freelancer</span>
+                <p class="text-[10px] uppercase font-bold tracking-widest mt-1 opacity-70">Proposer mes services</p>
               </div>
             </div>
 
@@ -56,13 +56,26 @@
               </div>
             </div>
 
-            <div class="relative">
-              <label class="block text-xs font-bold uppercase tracking-widest text-tertiary mb-1" for="password">Mot de passe</label>
-              <div class="flex items-center border-b border-outline-variant/40 focus-within:border-primary transition-colors duration-300 py-2">
-                <span class="material-symbols-outlined text-on-surface-variant mr-3">lock</span>
-                <input v-model="form.password" class="bg-transparent border-none focus:ring-0 w-full text-on-surface placeholder:text-on-surface-variant/40 p-0 font-medium" id="password" placeholder="••••••••" required type="password"/>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div class="relative">
+                <label class="block text-xs font-bold uppercase tracking-widest text-tertiary mb-1" for="password">Mot de passe</label>
+                <div class="flex items-center border-b focus-within:border-primary transition-colors duration-300 py-2"
+                     :class="passwordMismatch ? 'border-red-400' : 'border-outline-variant/40'">
+                  <span class="material-symbols-outlined text-on-surface-variant mr-3">lock</span>
+                  <input v-model="form.password" class="bg-transparent border-none focus:ring-0 w-full text-on-surface placeholder:text-on-surface-variant/40 p-0 font-medium" id="password" placeholder="••••••••" required type="password" minlength="8"/>
+                </div>
+                <p class="text-[10px] text-on-surface-variant mt-1 italic">Minimum 8 caractères.</p>
               </div>
-              <p class="text-[10px] text-on-surface-variant mt-2 italic">Minimum 8 caractères, incluant des chiffres et symboles.</p>
+              <div class="relative">
+                <label class="block text-xs font-bold uppercase tracking-widest text-tertiary mb-1" for="password_confirmation">Confirmer le mot de passe</label>
+                <div class="flex items-center border-b focus-within:border-primary transition-colors duration-300 py-2"
+                     :class="passwordMismatch ? 'border-red-400' : 'border-outline-variant/40'">
+                  <span class="material-symbols-outlined mr-3" :class="passwordMismatch ? 'text-red-400' : 'text-on-surface-variant'">lock_check</span>
+                  <input v-model="form.password_confirmation" class="bg-transparent border-none focus:ring-0 w-full text-on-surface placeholder:text-on-surface-variant/40 p-0 font-medium" id="password_confirmation" placeholder="••••••••" required type="password"/>
+                </div>
+                <p v-if="passwordMismatch" class="text-[10px] text-red-500 mt-1 font-bold">Les mots de passe ne correspondent pas.</p>
+                <p v-else-if="form.password_confirmation && !passwordMismatch" class="text-[10px] text-green-600 mt-1 font-bold">✓ Mots de passe identiques.</p>
+              </div>
             </div>
 
             <button :disabled="loading" class="w-full bg-primary text-on-primary font-black py-4 rounded-full shadow-xl hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2 group uppercase tracking-widest disabled:opacity-50" type="submit">
@@ -89,13 +102,13 @@
     </main>
 
     <footer class="py-6 px-8 flex flex-col md:flex-row justify-between items-center text-[10px] uppercase tracking-[0.2em] text-on-surface-variant/40 gap-4 mt-auto">
-      <p>© 2024 MorLancer. Tous droits réservés.</p>
+      <p>© 2026 MorLancer. Tous droits réservés.</p>
     </footer>
   </div>
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue';
+import { reactive, ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '@/api/axios';
 import { useAuthStore } from '@/stores/auth';
@@ -109,14 +122,24 @@ const form = reactive({
   name: '',
   email: '',
   password: '',
+  password_confirmation: '',
   role_name: 'freelancer'
 });
 
+const passwordMismatch = computed(() =>
+  form.password_confirmation.length > 0 && form.password !== form.password_confirmation
+);
+
 const handleRegister = async () => {
-  loading.value = true;
   errorMessage.value = '';
   formErrors.value = {};
 
+  if (form.password !== form.password_confirmation) {
+    errorMessage.value = 'Les mots de passe ne correspondent pas.';
+    return;
+  }
+
+  loading.value = true;
   try {
     const res = await api.post('/register', form);
     authStore.setAuth(res.data.user, res.data.access_token);
