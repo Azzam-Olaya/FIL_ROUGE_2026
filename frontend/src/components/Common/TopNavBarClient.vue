@@ -113,7 +113,7 @@
               <p class="font-bold text-sm text-on-surface">Briefs favoris <span class="text-on-surface-variant font-normal">({{ store.favoritedBriefs.length }})</span></p>
             </div>
             <div class="max-h-80 overflow-y-auto divide-y divide-primary/5">
-              <div v-for="b in store.favoritedBriefs" :key="b.id" class="flex gap-3 px-4 py-3 hover:bg-primary/5 group/item">
+              <div v-for="b in store.favoritedBriefs" :key="b.id" @click="goToBrief(b)" class="flex gap-3 px-4 py-3 hover:bg-primary/5 group/item cursor-pointer">
                 <div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white font-bold text-[10px] flex-shrink-0">
                   {{ initials(b.freelancer?.name) }}
                 </div>
@@ -237,6 +237,11 @@ const timeAgo = (d) => {
 const iconBg   = (t) => ({ like: 'bg-secondary', comment: 'bg-primary', message: 'bg-tertiary' }[t] || 'bg-primary')
 const iconName = (t) => ({ like: 'favorite', comment: 'comment', message: 'chat_bubble' }[t] || 'notifications')
 const initials = (n) => n?.split(' ').map(x => x[0]).join('').toUpperCase().slice(0, 2) || 'U'
+
+const goToBrief = (brief) => {
+  showFavorites.value = false
+  router.push({ path: '/client/dashboard', query: { tab: 'dashboard', briefId: brief.id } })
+}
 
 const handleOutside = (e) => {
   if (iconsRef.value && !iconsRef.value.contains(e.target)) {
