@@ -1,0 +1,324 @@
+@startuml MorLancer_Class_Diagram
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle Bold
+skinparam classBackgroundColor #FAFAFA
+skinparam classBorderColor #006233
+skinparam arrowColor #006233
+skinparam noteBackgroundColor #FFF9C4
+
+' ─────────────────────────────────────────
+' ROLE
+' ─────────────────────────────────────────
+class Role {
+    -int id
+    -string name
+    -timestamps()
+}
+
+' ─────────────────────────────────────────
+' USER
+' ─────────────────────────────────────────
+class User {
+    -int id
+    -string name
+    -string email
+    -string password
+    -int role_id
+    -string verification_status
+    -string id_document_path
+    -string id_number
+    -string birthplace
+    -decimal balance
+    -timestamps()
+    +getRoleNameAttribute() : string
+}
+
+note right of User
+  verification_status:
+  pending | verified
+  rejected | banned
+end note
+
+' ─────────────────────────────────────────
+' CATEGORY
+' ─────────────────────────────────────────
+class Category {
+    -int id
+    -string name
+    -int parent_id
+    -timestamps()
+}
+
+' ─────────────────────────────────────────
+' MISSION
+' ─────────────────────────────────────────
+class Mission {
+    -int id
+    -int client_id
+    -int category_id
+    -string title
+    -string description
+    -decimal budget
+    -date deadline
+    -string status
+    -timestamps()
+}
+
+note right of Mission
+  status:
+  open | in_progress
+  completed | cancelled
+end note
+
+class MissionLike {
+    -int id
+    -int mission_id
+    -int user_id
+    -timestamps()
+}
+
+class MissionComment {
+    -int id
+    -int mission_id
+    -int user_id
+    -string body
+    -timestamps()
+}
+
+class MissionFavorite {
+    -int id
+    -int mission_id
+    -int user_id
+    -timestamps()
+}
+
+class MissionApplication {
+    -int id
+    -int mission_id
+    -int freelancer_id
+    -string proposal
+    -decimal price
+    -string status
+    -timestamps()
+}
+
+note right of MissionApplication
+  status:
+  pending | accepted
+  rejected | cancelled
+end note
+
+' ─────────────────────────────────────────
+' BRIEF
+' ─────────────────────────────────────────
+class Brief {
+    -int id
+    -int freelancer_id
+    -int category_id
+    -string title
+    -string description
+    -array images
+    -decimal price
+    -string duration
+    -timestamps()
+    +getLikesCountAttribute() : int
+    +getCommentsCountAttribute() : int
+    +getIsLikedAttribute() : bool
+    +getIsFavoritedAttribute() : bool
+}
+
+class BriefLike {
+    -int id
+    -int brief_id
+    -int user_id
+    -timestamps()
+}
+
+class BriefComment {
+    -int id
+    -int brief_id
+    -int user_id
+    -string body
+    -timestamps()
+}
+
+class BriefFavorite {
+    -int id
+    -int brief_id
+    -int user_id
+    -timestamps()
+}
+
+' ─────────────────────────────────────────
+' CONTRACT
+' ─────────────────────────────────────────
+class Contract {
+    -int id
+    -int mission_id
+    -int client_id
+    -int freelancer_id
+    -decimal amount
+    -decimal commission
+    -string status
+    -string specifications
+    -string technologies
+    -date deadline
+    -timestamps()
+}
+
+note right of Contract
+  status:
+  pending_freelancer | active
+  completed | refunded | cancelled
+end note
+
+' ─────────────────────────────────────────
+' MESSAGE
+' ─────────────────────────────────────────
+class Message {
+    -int id
+    -int sender_id
+    -int receiver_id
+    -string content
+    -datetime read_at
+    -timestamps()
+    +markAsRead() : void
+    +scopeConversation() : Builder
+    +scopeUnreadFor() : Builder
+}
+
+' ─────────────────────────────────────────
+' NOTIFICATION
+' ─────────────────────────────────────────
+class Notification {
+    -int id
+    -int user_id
+    -string type
+    -string title
+    -string message
+    -bool read
+    -int mission_id
+    -timestamps()
+}
+
+' ─────────────────────────────────────────
+' TRANSACTION
+' ─────────────────────────────────────────
+class Transaction {
+    -int id
+    -int user_id
+    -int contract_id
+    -string type
+    -decimal amount
+    -string status
+    -string description
+    -array metadata
+    -timestamps()
+}
+
+note right of Transaction
+  type:
+  deposit | escrow_in
+  escrow_out | refund
+end note
+
+' ─────────────────────────────────────────
+' REPORT
+' ─────────────────────────────────────────
+class Report {
+    -int id
+    -int reporter_id
+    -int reported_id
+    -string reason
+    -string details
+    -string status
+    -timestamps()
+}
+
+note right of Report
+  status:
+  pending | dismissed | banned
+  auto-ban >= 10 reports
+end note
+
+' ─────────────────────────────────────────
+' PIVOT TABLES
+' ─────────────────────────────────────────
+class MissionCategory {
+    -int mission_id
+    -int category_id
+}
+
+class BriefCategory {
+    -int brief_id
+    -int category_id
+}
+
+' ─────────────────────────────────────────
+' RELATIONS
+' ─────────────────────────────────────────
+
+' Role ↔ User
+Role "1" --o "0..*" User : has
+
+' Category auto-référence
+Category "1" --o "0..*" Category : parent / children
+
+' User ↔ Mission
+User "1" --o "0..*" Mission : publishes\n(client)
+
+' User ↔ Brief
+User "1" --o "0..*" Brief : publishes\n(freelancer)
+
+' User ↔ Contract
+User "1" --o "0..*" Contract : signs as client
+User "1" --o "0..*" Contract : signs as freelancer
+
+' Mission ↔ Category (pivot)
+Mission "0..*" -- "0..*" Category
+(Mission, Category) .. MissionCategory
+
+' Brief ↔ Category (pivot)
+Brief "0..*" -- "0..*" Category
+(Brief, Category) .. BriefCategory
+
+' Mission interactions
+Mission "1" --o "0..*" MissionLike
+Mission "1" --o "0..*" MissionComment
+Mission "1" --o "0..*" MissionFavorite
+Mission "1" --o "0..*" MissionApplication
+Mission "1" --o "0..1" Contract : generates
+
+' Brief interactions
+Brief "1" --o "0..*" BriefLike
+Brief "1" --o "0..*" BriefComment
+Brief "1" --o "0..*" BriefFavorite
+
+' User ↔ interactions
+User "1" --o "0..*" MissionLike
+User "1" --o "0..*" MissionComment
+User "1" --o "0..*" MissionFavorite
+User "1" --o "0..*" MissionApplication : applies
+User "1" --o "0..*" BriefLike
+User "1" --o "0..*" BriefComment
+User "1" --o "0..*" BriefFavorite
+
+' Contract ↔ Transaction
+Contract "1" --o "0..*" Transaction
+
+' User ↔ Transaction
+User "1" --o "0..*" Transaction
+
+' User ↔ Message
+User "1" --o "0..*" Message : sends
+User "1" --o "0..*" Message : receives
+
+' User ↔ Notification
+User "1" --o "0..*" Notification
+
+' User ↔ Report
+User "1" --o "0..*" Report : reporter
+User "1" --o "0..*" Report : reported
+
+@enduml
