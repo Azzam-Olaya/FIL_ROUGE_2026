@@ -56,20 +56,9 @@
           <AdminStats      v-if="activeTab === 'stats'"      />
           <AdminUsers      v-if="activeTab === 'users'"      />
           <AdminCategories v-if="activeTab === 'categories'" />
-<<<<<<< HEAD
-          <AdminContracts v-if="activeTab === 'contracts'" />
-          <AdminPayments v-if="activeTab === 'payments'" />
-          <AdminReports v-if="activeTab === 'reports'" />
-
-          <div v-if="['reports'].includes(activeTab) && false" class="text-center py-20 bg-white/50 backdrop-blur-sm rounded-[2.5rem] border border-primary/5">
-            <span class="material-symbols-outlined text-6xl text-on-surface-variant/30 mb-4 animate-bounce">construction</span>
-            <p class="text-on-surface-variant font-medium">Module {{ activeTab }} - En développement</p>
-          </div>
-=======
           <AdminContracts  v-if="activeTab === 'contracts'"  />
           <AdminPayments   v-if="activeTab === 'payments'"   />
           <AdminReports    v-if="activeTab === 'reports'"    />
->>>>>>> 139113f (commit)
         </div>
       </main>
     </div>
@@ -93,39 +82,6 @@ const router      = useRouter()
 const authStore   = useAuthStore()
 
 const navItems = [
-<<<<<<< HEAD
-  { tab: 'stats',      icon: 'dashboard',   label: 'Tableau de bord' },
-  { tab: 'users',      icon: 'group',       label: 'Utilisateurs'    },
-  { tab: 'contracts',  icon: 'handshake',   label: 'Contrats'        },
-  { tab: 'payments',   icon: 'payments',    label: 'Paiements'       },
-  { tab: 'categories', icon: 'category',    label: 'Catégories'      },
-  { tab: 'reports',    icon: 'report',      label: 'Signalements'    },
-]
-
-const getTabTitle = () => {
-  const titles = {
-    stats:      'Vue d\'ensemble',
-    users:      'Gestion des Utilisateurs',
-    contracts:  'Statistiques Contrats',
-    payments:   'Statistiques Paiements',
-    categories: 'Gestion des Catégories',
-    reports:    'Gestion des Signalements'
-  }
-  return titles[activeTab.value] || 'Vue d\'ensemble'
-}
-
-const getTabDescription = () => {
-  const descriptions = {
-    stats:      'Suivi de l\'écosystème MorLancer',
-    users:      'Validation et gestion des comptes utilisateurs',
-    contracts:  'Statuts, volumes et top freelancers',
-    payments:   'Dépôts, transactions et revenus plateforme',
-    categories: 'Organisation des catégories de services',
-    reports:    'Traitement des signalements et litiges'
-  }
-  return descriptions[activeTab.value] || 'Suivi de l\'écosystème MorLancer'
-}
-=======
   { tab: 'stats',      icon: 'dashboard',  label: 'Tableau de bord' },
   { tab: 'users',      icon: 'group',      label: 'Utilisateurs'    },
   { tab: 'contracts',  icon: 'handshake',  label: 'Contrats'        },
@@ -151,7 +107,6 @@ const getTabDescription = () => ({
   categories: 'Organisation des catégories de services',
   reports:    'Traitement des signalements et litiges',
 }[activeTab.value] || 'Suivi de l\'écosystème MorLancer')
->>>>>>> 139113f (commit)
 
 const handleLogout = () => {
   authStore.clearAuth()
