@@ -16,7 +16,7 @@
         <!-- Desktop Nav -->
         <nav class="hidden md:flex items-center gap-8">
           <a href="#about" class="nav-link">À propos</a>
-          <a href="#services" class="nav-link">Services</a>
+          <a href="#how" class="nav-link">Comment ça marche</a>
           <a href="#contact" class="nav-link">Contact</a>
         </nav>
 
@@ -40,7 +40,7 @@
       <transition name="slide-down">
         <div v-if="mobileMenuOpen" class="md:hidden bg-white border-t border-primary/5 px-6 py-6 space-y-4 shadow-xl">
           <a href="#about" @click="mobileMenuOpen = false" class="block text-sm font-bold text-on-surface-variant hover:text-primary uppercase tracking-widest py-2">À propos</a>
-          <a href="#services" @click="mobileMenuOpen = false" class="block text-sm font-bold text-on-surface-variant hover:text-primary uppercase tracking-widest py-2">Services</a>
+          <a href="#how" @click="mobileMenuOpen = false" class="block text-sm font-bold text-on-surface-variant hover:text-primary uppercase tracking-widest py-2">Comment ça marche</a>
           <a href="#contact" @click="mobileMenuOpen = false" class="block text-sm font-bold text-on-surface-variant hover:text-primary uppercase tracking-widest py-2">Contact</a>
           <hr class="border-primary/10">
           <router-link to="/login" class="block text-sm font-bold text-primary uppercase tracking-wider py-2">Connexion</router-link>
@@ -62,29 +62,29 @@
 
         <div class="max-w-6xl mx-auto px-6 relative z-10 text-center">
           <span class="inline-block bg-secondary/10 text-secondary text-[10px] font-black uppercase tracking-[0.3em] px-5 py-2 rounded-full mb-8 animate-pulse">
-            🇲🇦 Plateforme n°1 au Maroc
+            🇲🇦 Marketplace Freelance au Maroc
           </span>
 
           <h1 class="text-5xl md:text-7xl lg:text-8xl font-serif font-bold text-on-surface mb-8 leading-[1.1] tracking-tight">
-            L'Élite de <br class="hidden sm:block">
+            Connectez Clients <br class="hidden sm:block">
             <span class="text-primary italic relative">
-              l'Artisanat
+              & Freelancers
               <svg class="absolute -bottom-2 left-0 w-full h-3 text-primary/20" viewBox="0 0 200 8" preserveAspectRatio="none">
                 <path d="M0 7c50-6 100-6 200 0" stroke="currentColor" stroke-width="3" fill="none"/>
               </svg>
-            </span> Digital
+            </span> au Maroc
           </h1>
 
           <p class="text-lg md:text-xl text-on-surface-variant max-w-2xl mx-auto mb-12 font-medium leading-relaxed">
-            Connectez-vous avec les meilleurs talents marocains. Des projets d'exception, réalisés par des mains expertes.
+            Publiez vos missions, découvrez des talents via leurs Briefs, et collaborez en toute confiance grâce à un système de contrats et paiements sécurisés.
           </p>
 
           <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
             <router-link to="/register" class="w-full sm:w-auto bg-primary text-white px-10 py-4 rounded-2xl font-bold text-lg shadow-xl shadow-primary/30 hover:translate-y-[-3px] hover:shadow-2xl transition-all duration-300 active:scale-95">
-              Commencer l'expérience
+              Créer mon compte
             </router-link>
-            <a href="#services" class="w-full sm:w-auto bg-white border-2 border-primary/10 text-primary px-10 py-4 rounded-2xl font-bold text-lg hover:bg-primary/5 hover:border-primary/20 transition-all duration-300">
-              Voir nos services
+            <a href="#how" class="w-full sm:w-auto bg-white border-2 border-primary/10 text-primary px-10 py-4 rounded-2xl font-bold text-lg hover:bg-primary/5 hover:border-primary/20 transition-all duration-300">
+              Comment ça marche
             </a>
           </div>
 
@@ -104,9 +104,9 @@
       <section id="services" class="py-20 md:py-28 px-6">
         <div class="max-w-6xl mx-auto">
           <div class="text-center mb-16">
-            <span class="text-primary/60 text-xs font-black uppercase tracking-[0.3em] mb-4 block">Nos Expertises</span>
+            <span class="text-primary/60 text-xs font-black uppercase tracking-[0.3em] mb-4 block">Ce que vous pouvez faire</span>
             <h2 class="text-4xl md:text-5xl font-serif font-bold text-on-surface leading-tight">
-              Savoir-faire <span class="text-primary italic">Exceptionnel</span>
+              Une plateforme <span class="text-primary italic">complète</span>
             </h2>
           </div>
 
@@ -133,16 +133,16 @@
       <!-- ═══════════════════════════════════════════════
            SECTION 3 : À PROPOS
       ═══════════════════════════════════════════════ -->
-      <section id="about" class="py-20 md:py-28 bg-surface-container relative overflow-hidden">
+      <section id="how" class="py-20 md:py-28 bg-surface-container relative overflow-hidden">
         <div class="absolute inset-0 opacity-5 pointer-events-none zellige-pattern"></div>
         <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-center relative z-10">
           <div>
-            <span class="text-primary font-black text-xs uppercase tracking-[0.3em] mb-4 block">Notre Philosophie</span>
+            <span class="text-primary font-black text-xs uppercase tracking-[0.3em] mb-4 block">Comment ça marche</span>
             <h3 class="text-4xl md:text-5xl font-serif font-bold text-on-surface mb-8 leading-tight">
-              Fusion entre <span class="text-primary italic">Héritage</span> et Vision Digitale
+              Du Brief au <span class="text-primary italic">Contrat</span> en quelques clics
             </h3>
             <p class="text-on-surface-variant mb-8 leading-relaxed text-lg">
-              MorLancer n'est pas seulement une plateforme, c'est une vitrine pour l'artisanat du futur. Nous valorisons la qualité, la rigueur et le talent marocain à l'échelle globale.
+              MorLancer centralise tout le cycle freelance : publication de missions, découverte de talents via leurs Briefs, génération automatique de contrats, messagerie en temps réel et paiements sécurisés.
             </p>
             <ul class="space-y-5">
               <li v-for="item in benefits" :key="item" class="flex items-center gap-4 group">
@@ -156,8 +156,8 @@
           <div class="relative">
             <div class="absolute -inset-6 bg-primary/5 rounded-[4rem] rotate-3 transition-transform hover:rotate-6"></div>
             <div class="absolute -inset-6 bg-secondary/5 rounded-[4rem] -rotate-2"></div>
-            <img src="https://images.unsplash.com/photo-1541746972996-4e0b0f43e02a?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
-                 alt="Artisan marocain"
+            <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+                 alt="Collaboration freelance"
                  class="relative rounded-[3rem] shadow-2xl border-4 border-white object-cover h-[450px] w-full hover:scale-[1.02] transition-transform duration-500">
           </div>
         </div>
@@ -178,10 +178,10 @@
               Rejoignez la communauté
             </span>
             <h2 class="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-white mb-6 leading-tight">
-              Prêt à transformer<br>votre <span class="italic text-primary-fixed-dim">talent</span> en succès ?
+              Prêt à lancer<br>votre première <span class="italic text-primary-fixed-dim">mission</span> ?
             </h2>
             <p class="text-white/70 text-lg max-w-xl mx-auto mb-10 font-medium leading-relaxed">
-              Des milliers de freelancers marocains nous font déjà confiance. Publiez votre première mission ou proposez vos services dès aujourd'hui.
+              Rejoignez MorLancer, créez votre profil, publiez vos Briefs ou vos missions et commencez à collaborer dès aujourd'hui.
             </p>
             <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
               <router-link to="/register" class="w-full sm:w-auto bg-white text-primary px-10 py-4 rounded-2xl font-bold text-lg shadow-xl hover:shadow-2xl hover:translate-y-[-3px] transition-all duration-300 active:scale-95">
@@ -273,11 +273,11 @@
         <div class="flex flex-col md:flex-row justify-between items-start gap-12 mb-12">
           <div>
             <span class="text-3xl font-serif font-bold text-white mb-3 block">MorLancer</span>
-            <p class="text-on-surface-variant/60 text-sm max-w-xs">L'excellence artisanale au service de l'innovation digitale marocaine.</p>
+            <p class="text-on-surface-variant/60 text-sm max-w-xs">La marketplace freelance marocaine — missions, contrats et paiements sécurisés en un seul endroit.</p>
           </div>
           <div class="grid grid-cols-2 gap-x-16 gap-y-3">
             <a href="#about" class="text-sm text-on-surface-variant/60 hover:text-white transition-colors">À propos</a>
-            <a href="#services" class="text-sm text-on-surface-variant/60 hover:text-white transition-colors">Services</a>
+            <a href="#how" class="text-sm text-on-surface-variant/60 hover:text-white transition-colors">Comment ça marche</a>
             <a href="#contact" class="text-sm text-on-surface-variant/60 hover:text-white transition-colors">Contact</a>
             <router-link to="/login" class="text-sm text-on-surface-variant/60 hover:text-white transition-colors">Connexion</router-link>
           </div>
@@ -328,33 +328,33 @@ const submitContact = () => {
 
 // ─── Data ───
 const stats = [
-  { value: '2,000+', label: 'Freelancers' },
-  { value: '850+', label: 'Missions livrées' },
-  { value: '98%', label: 'Satisfaction' },
-  { value: '24/7', label: 'Support' }
+  { value: '3 rôles', label: 'Admin · Client · Freelancer' },
+  { value: '100%', label: 'Contrats automatisés' },
+  { value: 'Temps réel', label: 'Messagerie intégrée' },
+  { value: 'Escrow', label: 'Paiements sécurisés' }
 ];
 
 const services = [
   {
-    title: 'Code & Dev',
-    description: 'Applications robustes et performantes, sculptées avec les meilleures technologies du marché.',
-    icon: 'code',
+    title: 'Briefs & Portfolio',
+    description: 'Les freelancers publient leurs réalisations sous forme de Briefs. Les clients explorent, likent, commentent et favorisent les profils qui les inspirent.',
+    icon: 'auto_awesome',
     borderColor: 'border-primary',
     bgColor: 'bg-primary/10',
     iconColor: 'text-primary'
   },
   {
-    title: 'Art Visuel',
-    description: "Identités visuelles d'exception qui capturent l'essence de votre marque avec élégance.",
-    icon: 'palette',
+    title: 'Missions & Contrats',
+    description: 'Les clients publient des missions détaillées. Un contrat est généré automatiquement dès qu\'un accord est trouvé, avec suivi de statut complet.',
+    icon: 'handshake',
     borderColor: 'border-secondary',
     bgColor: 'bg-secondary/10',
     iconColor: 'text-secondary'
   },
   {
-    title: 'Stratégie',
-    description: "Conseil et marketing d'élite pour propulser votre activité vers de nouveaux sommets.",
-    icon: 'auto_graph',
+    title: 'Paiements & Wallet',
+    description: 'Système d\'escrow intégré avec PayPal. Les fonds sont sécurisés jusqu\'à la validation de la mission, protégeant clients et freelancers.',
+    icon: 'account_balance_wallet',
     borderColor: 'border-tertiary',
     bgColor: 'bg-tertiary/10',
     iconColor: 'text-tertiary'
@@ -362,10 +362,10 @@ const services = [
 ];
 
 const benefits = [
-  'Validation rigoureuse des profils',
-  'Système de paiement sécurisé',
-  'Accompagnement premium 24/7',
-  'Réseau exclusif de talents'
+  'Approbation admin obligatoire pour chaque compte',
+  'Contrats générés automatiquement à l\'accord',
+  'Messagerie en temps réel liée aux contrats',
+  'Paiements sécurisés via escrow PayPal'
 ];
 
 const contactInfo = [
