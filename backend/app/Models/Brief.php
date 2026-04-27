@@ -1,17 +1,18 @@
 <?php
 namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
-class Portfolio extends Model {
+class Brief extends Model {
+    protected $table = 'portfolios';
     protected $fillable = ['freelancer_id', 'category_id', 'title', 'description', 'images', 'price', 'duration'];
     protected $casts = ['images' => 'array'];
     protected $appends = ['likes_count', 'comments_count', 'is_liked', 'is_favorited'];
 
     public function freelancer() { return $this->belongsTo(User::class, 'freelancer_id'); }
     public function category() { return $this->belongsTo(Category::class); }
-    public function categories() { return $this->belongsToMany(Category::class, 'portfolio_categories'); }
-    public function likes() { return $this->hasMany(PortfolioLike::class); }
-    public function comments() { return $this->hasMany(PortfolioComment::class); }
-    public function favorites() { return $this->hasMany(PortfolioFavorite::class); }
+    public function categories() { return $this->belongsToMany(Category::class, 'portfolio_categories', 'portfolio_id', 'category_id'); }
+    public function likes() { return $this->hasMany(BriefLike::class, 'portfolio_id'); }
+    public function comments() { return $this->hasMany(BriefComment::class, 'portfolio_id'); }
+    public function favorites() { return $this->hasMany(BriefFavorite::class, 'portfolio_id'); }
 
     public function getLikesCountAttribute() { return $this->attributes['likes_count'] ?? $this->likes()->count(); }
     public function getCommentsCountAttribute() { return $this->attributes['comments_count'] ?? $this->comments()->count(); }

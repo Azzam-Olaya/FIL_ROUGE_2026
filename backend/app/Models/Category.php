@@ -23,8 +23,8 @@ class Category extends Model
         return $this->hasMany(Mission::class);
     }
 
-    public function portfolios()
+    public function briefs()
     {
-        return $this->hasMany(Portfolio::class);
+        return $this->hasMany(Brief::class);
     }
 }

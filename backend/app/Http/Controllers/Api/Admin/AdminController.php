@@ -162,10 +162,15 @@ class AdminController extends Controller
 
     public function getUsers(Request $request)
     {
-        $query = User::with('role');
+        $query = User::with('role')->select(
+            'id', 'name', 'email', 'verification_status', 'created_at',
+            'id_number', 'birthplace', 'id_document_path', 'role_id'
+        );
         if ($request->role)   $query->whereHas('role', fn($q) => $q->where('name', $request->role));
         if ($request->status) $query->where('verification_status', $request->status);
-        return response()->json($query->latest()->get());
+        return response()->json($query->latest()->get()->map(fn($u) => array_merge($u->toArray(), [
+            'role_name' => $u->role?->name,
+        ])));
     }
 
     public function approveUser($id)

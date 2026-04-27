@@ -1,7 +1,7 @@
 <template>
   <div class="bg-white rounded-[2rem] border border-primary/10 shadow-sm hover:shadow-md transition-all">
 
-    <!-- Post Header: client avatar + name + deadline + budget -->
+    <!-- Header -->
     <div class="flex items-start justify-between gap-3 p-6 pb-4">
       <div class="flex items-center gap-3">
         <div class="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-md shadow-primary/20">
@@ -29,7 +29,7 @@
       </div>
     </div>
 
-    <!-- Post Body -->
+    <!-- Body -->
     <div class="px-6 pb-4">
       <h3 class="font-headline text-lg font-bold text-on-surface mb-2">{{ mission.title }}</h3>
       <p class="text-on-surface-variant text-sm leading-relaxed" :class="expanded ? '' : 'line-clamp-3'">
@@ -41,7 +41,7 @@
       </button>
     </div>
 
-    <!-- Categories pills (Languages/Skills) -->
+    <!-- Categories -->
     <div v-if="mission.categories?.length" class="px-6 pb-3 flex flex-wrap gap-2">
       <span v-for="(cat, i) in mission.categories" :key="i"
         class="text-[10px] font-bold text-secondary bg-secondary/10 px-3 py-1.5 rounded-lg flex items-center gap-1">
@@ -50,7 +50,7 @@
       </span>
     </div>
 
-    <!-- Counters bar -->
+    <!-- Counters -->
     <div class="px-6 py-2 flex items-center justify-between border-t border-b border-primary/5 text-xs text-on-surface-variant">
       <span class="flex items-center gap-1">
         <span class="w-4 h-4 rounded-full bg-secondary flex items-center justify-center">
@@ -63,7 +63,7 @@
       </button>
     </div>
 
-    <!-- Action buttons -->
+    <!-- Actions -->
     <div class="px-4 py-2 flex items-center gap-1 border-b border-primary/5">
       <button @click="toggleLike"
         :class="store.isLiked(mission.id) ? 'text-secondary bg-secondary/10' : 'text-on-surface-variant hover:bg-surface-container hover:text-secondary'"
@@ -85,11 +85,6 @@
           :style="store.isFavorited(mission.id) ? `font-variation-settings:'FILL' 1` : ''">star</span>
         Favori
       </button>
-      <button @click="showApplyModal = true"
-        class="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl bg-primary text-white hover:brightness-110 transition-all font-semibold text-sm">
-        <span class="material-symbols-outlined text-base">send</span>
-        Postuler
-      </button>
       <button @click="showContactModal = true"
         class="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl border border-primary text-primary hover:bg-primary/5 transition-all font-semibold text-sm">
         <span class="material-symbols-outlined text-base">mail</span>
@@ -97,9 +92,8 @@
       </button>
     </div>
 
-    <!-- Comments section -->
+    <!-- Comments -->
     <div v-if="showComments" class="px-6 py-4 space-y-4">
-      <!-- Add comment -->
       <div class="flex gap-3 items-start">
         <div class="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-[10px] flex-shrink-0">
           {{ store.userInitials }}
@@ -113,8 +107,6 @@
           </button>
         </div>
       </div>
-
-      <!-- Comments list -->
       <div v-if="commentsList.length" class="space-y-3">
         <div v-for="(c, i) in commentsList" :key="i" class="flex gap-3 items-start">
           <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold text-[10px] flex-shrink-0">
@@ -163,47 +155,6 @@
       </div>
     </Teleport>
 
-    <!-- Apply Modal -->
-    <Teleport to="body">
-      <div v-if="showApplyModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" @click.self="showApplyModal = false">
-        <div class="bg-white rounded-[2.5rem] shadow-2xl max-w-md w-full p-8 animate-in">
-          <div class="flex items-center justify-between mb-6">
-            <h2 class="font-headline text-2xl font-bold text-on-surface">Postuler à la mission</h2>
-            <button @click="showApplyModal = false" class="p-2 hover:bg-primary/10 rounded-full transition-colors">
-              <span class="material-symbols-outlined">close</span>
-            </button>
-          </div>
-          
-          <div class="space-y-4">
-            <div>
-              <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2">Votre proposition</label>
-              <textarea v-model="applyForm.proposal" rows="4" placeholder="Décrivez votre approche, vos outils..."
-                class="w-full bg-surface-container border border-primary/10 rounded-2xl px-5 py-4 text-sm focus:border-primary focus:outline-none resize-none" />
-            </div>
-
-            <div>
-              <label class="block text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2">Votre tarif (DH)</label>
-              <div class="relative">
-                <input v-model="applyForm.price" type="number" placeholder="0.00"
-                  class="w-full bg-surface-container border border-primary/10 rounded-2xl pl-12 pr-5 py-3 text-sm font-bold focus:border-primary focus:outline-none" />
-                <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary">payments</span>
-              </div>
-              <p class="text-[10px] text-on-surface-variant mt-2 italic">* La plateforme retiendra 5% de commission sur ce montant.</p>
-            </div>
-
-            <div class="flex gap-3 pt-4">
-              <button @click="showApplyModal = false"
-                class="flex-1 px-4 py-3 rounded-full border border-primary text-primary font-bold text-sm hover:bg-primary/5 transition-colors">Annuler</button>
-              <button @click="submitApply" :disabled="!applyForm.proposal || !applyForm.price || applying"
-                class="flex-1 px-4 py-3 rounded-full bg-primary text-white font-bold text-sm disabled:opacity-50 hover:scale-105 transition-transform flex items-center justify-center gap-2 shadow-lg shadow-primary/25">
-                <span v-if="applying" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                <span v-else>Envoyer l'offre</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Teleport>
   </div>
 </template>
 
@@ -218,14 +169,11 @@ const store = useFreelancerStore()
 
 const showComments     = ref(false)
 const showContactModal = ref(false)
-const showApplyModal   = ref(false)
 const expanded         = ref(false)
 const newComment       = ref('')
 const contactMessage   = ref('')
-const applyForm        = ref({ proposal: '', price: props.mission.budget || props.mission.price })
 const commentsList     = ref(props.mission.commentsList || [])
 const sending          = ref(false)
-const applying         = ref(false)
 
 const initials = (n) => n?.split(' ').map(x => x[0]).join('').toUpperCase().slice(0, 2) || 'U'
 
@@ -265,18 +213,6 @@ const sendContact = async () => {
     contactMessage.value   = ''
     window.dispatchEvent(new CustomEvent('freelancer-tab', { detail: 'messages' }))
   } catch {} finally { sending.value = false }
-}
-
-const submitApply = async () => {
-  if (!applyForm.value.proposal || !applyForm.value.price) return
-  applying.value = true
-  try {
-    await api.post(`/freelancer/missions/${props.mission.id}/apply`, applyForm.value)
-    showApplyModal.value = false
-    alert('Votre candidature a été envoyée avec succès !')
-  } catch (e) {
-    alert(e.response?.data?.message || 'Erreur lors de l’envoi de la candidature')
-  } finally { applying.value = false }
 }
 </script>
 

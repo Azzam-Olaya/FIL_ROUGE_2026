@@ -3,10 +3,11 @@
 namespace App\Http\Controllers\Api\Client;
 
 use App\Http\Controllers\Controller;
-use App\Models\PortfolioFavorite;
-use App\Models\Portfolio;
-use App\Models\PortfolioLike;
-use App\Models\PortfolioComment;
+use App\Models\BriefFavorite;
+use App\Models\Brief;
+use App\Models\BriefLike;
+use App\Models\BriefComment;
+use App\Models\Mission;
 use App\Models\MissionFavorite;
 use App\Models\Notification;
 use App\Models\MissionApplication;
@@ -102,10 +103,10 @@ class ClientController extends Controller
     public function getMyFavorites(Request $request)
     {
         return response()->json(
-            PortfolioFavorite::where('user_id', $request->user()->id)
-                ->with(['portfolio.category', 'portfolio.freelancer'])
+            BriefFavorite::where('user_id', $request->user()->id)
+                ->with(['brief.category', 'brief.freelancer'])
                 ->get()
-                ->pluck('portfolio')
+                ->pluck('brief')
         );
     }
 
@@ -137,7 +138,7 @@ class ClientController extends Controller
 
     public function getBriefs(Request $request)
     {
-        $query = \App\Models\Portfolio::with(['freelancer', 'category', 'likes', 'comments.user']);
+        $query = \App\Models\Brief::with(['freelancer', 'category', 'likes', 'comments.user']);
 
         if ($request->search) {
             $s = $request->search;
@@ -177,20 +178,20 @@ class ClientController extends Controller
 
     public function toggleLike(Request $request, $id)
     {
-        $portfolio = Portfolio::findOrFail($id);
-        $existing = PortfolioLike::where(['portfolio_id' => $id, 'user_id' => $request->user()->id])->first();
+        $brief = Brief::findOrFail($id);
+        $existing = BriefLike::where(['portfolio_id' => $id, 'user_id' => $request->user()->id])->first();
         if ($existing) {
             $existing->delete();
             return response()->json(['liked' => false]);
         }
-        PortfolioLike::create(['portfolio_id' => $id, 'user_id' => $request->user()->id]);
+        BriefLike::create(['portfolio_id' => $id, 'user_id' => $request->user()->id]);
 
         // Notify Freelancer
         Notification::create([
-            'user_id' => $portfolio->freelancer_id,
+            'user_id' => $brief->freelancer_id,
             'type'    => 'like',
             'title'   => '❤️ Nouveau like sur votre brief',
-            'message' => $request->user()->name . ' a aimé votre brief "' . $portfolio->title . '"',
+            'message' => $request->user()->name . ' a aimé votre brief "' . $brief->title . '"',
             'portfolio_id' => $id // Use mission_id if we want to reuse the column or add one
         ]);
 
@@ -200,8 +201,8 @@ class ClientController extends Controller
     public function addComment(Request $request, $id)
     {
         $request->validate(['body' => 'required|string|max:500']);
-        $portfolio = Portfolio::findOrFail($id);
-        $comment = PortfolioComment::create([
+        $brief = Brief::findOrFail($id);
+        $comment = BriefComment::create([
             'portfolio_id' => $id,
             'user_id'      => $request->user()->id,
             'body'         => $request->body,
@@ -209,10 +210,10 @@ class ClientController extends Controller
 
         // Notify Freelancer
         Notification::create([
-            'user_id' => $portfolio->freelancer_id,
+            'user_id' => $brief->freelancer_id,
             'type'    => 'comment',
             'title'   => '💬 Nouveau commentaire sur votre brief',
-            'message' => $request->user()->name . ' : "' . \Str::limit($request->body, 60) . '" sur "' . $portfolio->title . '"',
+            'message' => $request->user()->name . ' : "' . \Str::limit($request->body, 60) . '" sur "' . $brief->title . '"',
         ]);
 
         return response()->json($comment->load('user'), 201);
@@ -221,15 +222,15 @@ class ClientController extends Controller
     public function getComments($id)
     {
         return response()->json(
-            \App\Models\PortfolioComment::where('portfolio_id', $id)->with('user')->latest()->get()
+            \App\Models\BriefComment::where('portfolio_id', $id)->with('user')->latest()->get()
         );
     }
 
     public function toggleFavorite(Request $request, $id)
     {
-        $existing = \App\Models\PortfolioFavorite::where(['portfolio_id' => $id, 'user_id' => $request->user()->id])->first();
+        $existing = \App\Models\BriefFavorite::where(['portfolio_id' => $id, 'user_id' => $request->user()->id])->first();
         if ($existing) { $existing->delete(); return response()->json(['favorited' => false]); }
-        \App\Models\PortfolioFavorite::create(['portfolio_id' => $id, 'user_id' => $request->user()->id]);
+        \App\Models\BriefFavorite::create(['portfolio_id' => $id, 'user_id' => $request->user()->id]);
         return response()->json(['favorited' => true]);
     }
 
@@ -384,11 +385,11 @@ class ClientController extends Controller
             if (!\Illuminate\Support\Facades\Schema::hasTable('mission_comments')) {
                 \Illuminate\Support\Facades\DB::statement("CREATE TABLE mission_comments (id SERIAL PRIMARY KEY, mission_id BIGINT NOT NULL REFERENCES missions(id) ON DELETE CASCADE, user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE, body TEXT NOT NULL, created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL)");
             }
-            if (!\Illuminate\Support\Facades\Schema::hasColumn('portfolios', 'price')) {
-                \Illuminate\Support\Facades\DB::statement('ALTER TABLE portfolios ADD COLUMN price DECIMAL(10,2) NULL');
+            if (!\Illuminate\Support\Facades\Schema::hasColumn('briefs', 'price')) {
+                \Illuminate\Support\Facades\DB::statement('ALTER TABLE briefs ADD COLUMN price DECIMAL(10,2) NULL');
             }
-            if (!\Illuminate\Support\Facades\Schema::hasColumn('portfolios', 'duration')) {
-                \Illuminate\Support\Facades\DB::statement('ALTER TABLE portfolios ADD COLUMN duration VARCHAR(100) NULL');
+            if (!\Illuminate\Support\Facades\Schema::hasColumn('briefs', 'duration')) {
+                \Illuminate\Support\Facades\DB::statement('ALTER TABLE briefs ADD COLUMN duration VARCHAR(100) NULL');
             }
             if (!\Illuminate\Support\Facades\Schema::hasTable('mission_favorites')) {
                 \Illuminate\Support\Facades\DB::statement("CREATE TABLE mission_favorites (id SERIAL PRIMARY KEY, mission_id BIGINT NOT NULL REFERENCES missions(id) ON DELETE CASCADE, user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE, created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL, UNIQUE(mission_id, user_id))");

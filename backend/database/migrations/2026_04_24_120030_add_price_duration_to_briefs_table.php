@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('portfolios', function (Blueprint $table) {
+        Schema::table('briefs', function (Blueprint $table) {
             $table->decimal('price', 10, 2)->nullable()->after('images');
             $table->string('duration', 100)->nullable()->after('price');
         });
@@ -16,7 +16,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('portfolios', function (Blueprint $table) {
+        Schema::table('briefs', function (Blueprint $table) {
             $table->dropColumn(['price', 'duration']);
         });
     }

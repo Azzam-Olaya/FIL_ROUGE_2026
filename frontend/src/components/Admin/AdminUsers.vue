@@ -24,7 +24,9 @@
             <tr>
               <th class="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Nom</th>
               <th class="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Compte</th>
-              <th class="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">ID / Document</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">N° CIN</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Né(e) à</th>
+              <th class="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Document</th>
               <th class="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Date</th>
               <th class="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Statut</th>
               <th class="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-widest">Actions</th>
@@ -47,15 +49,19 @@
                 </div>
               </td>
               <td class="px-6 py-4">
-                <div class="flex flex-col gap-1">
-                  <span class="text-xs font-medium text-on-surface">No: {{ user.id_number || '—' }}</span>
-                  <a v-if="user.id_document_path"
-                     :href="`${BASE_URL}/storage/${user.id_document_path}`"
-                     target="_blank"
-                     class="text-primary hover:underline text-[10px] font-bold flex items-center gap-1">
-                    <span class="material-symbols-outlined text-xs">file_open</span> Voir document
-                  </a>
-                </div>
+                <span class="text-sm font-bold text-on-surface">{{ user.id_number || '—' }}</span>
+              </td>
+              <td class="px-6 py-4">
+                <span class="text-sm text-on-surface-variant">{{ user.birthplace || '—' }}</span>
+              </td>
+              <td class="px-6 py-4">
+                <a v-if="user.id_document_path"
+                   :href="`${BASE_URL}/storage/${user.id_document_path}`"
+                   target="_blank"
+                   class="text-primary hover:underline text-xs font-bold flex items-center gap-1">
+                  <span class="material-symbols-outlined text-sm">file_open</span> Voir
+                </a>
+                <span v-else class="text-xs text-gray-400 italic">Aucun</span>
               </td>
               <td class="px-6 py-4 text-sm text-gray-600">
                 <div class="flex flex-col">
@@ -99,7 +105,7 @@
               </td>
             </tr>
             <tr v-if="users.length === 0">
-              <td colspan="6" class="px-6 py-12 text-center text-gray-400 italic text-sm">
+              <td colspan="8" class="px-6 py-12 text-center text-gray-400 italic text-sm">
                 Aucun utilisateur trouvé.
               </td>
             </tr>

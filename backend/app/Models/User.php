@@ -70,11 +70,11 @@ class User extends Authenticatable
     }
 
     /**
-     * Relation (Freelancer) : Un utilisateur peut avoir plusieurs éléments dans son Portfolio.
+     * Relation (Freelancer) : Un utilisateur peut avoir plusieurs éléments dans son Brief.
      */
-    public function portfolios()
+    public function briefs()
     {
-        return $this->hasMany(Portfolio::class, 'freelancer_id');
+        return $this->hasMany(Brief::class, 'freelancer_id');
     }
 
     public function contracts()

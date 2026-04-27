@@ -4,13 +4,13 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void {
-        Schema::create('portfolio_comments', function (Blueprint $table) {
+        Schema::create('brief_comments', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('portfolio_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('brief_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->text('body');
             $table->timestamps();
         });
     }
-    public function down(): void { Schema::dropIfExists('portfolio_comments'); }
+    public function down(): void { Schema::dropIfExists('brief_comments'); }
 };
