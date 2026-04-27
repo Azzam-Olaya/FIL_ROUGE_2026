@@ -179,12 +179,12 @@ class ClientController extends Controller
     public function toggleLike(Request $request, $id)
     {
         $brief = Brief::findOrFail($id);
-        $existing = BriefLike::where(['portfolio_id' => $id, 'user_id' => $request->user()->id])->first();
+        $existing = BriefLike::where(['brief_id' => $id, 'user_id' => $request->user()->id])->first();
         if ($existing) {
             $existing->delete();
             return response()->json(['liked' => false]);
         }
-        BriefLike::create(['portfolio_id' => $id, 'user_id' => $request->user()->id]);
+        BriefLike::create(['brief_id' => $id, 'user_id' => $request->user()->id]);
 
         // Notify Freelancer
         Notification::create([
@@ -192,7 +192,7 @@ class ClientController extends Controller
             'type'    => 'like',
             'title'   => '❤️ Nouveau like sur votre brief',
             'message' => $request->user()->name . ' a aimé votre brief "' . $brief->title . '"',
-            'portfolio_id' => $id // Use mission_id if we want to reuse the column or add one
+            'brief_id' => $id // Use mission_id if we want to reuse the column or add one
         ]);
 
         return response()->json(['liked' => true]);
@@ -203,7 +203,7 @@ class ClientController extends Controller
         $request->validate(['body' => 'required|string|max:500']);
         $brief = Brief::findOrFail($id);
         $comment = BriefComment::create([
-            'portfolio_id' => $id,
+            'brief_id' => $id,
             'user_id'      => $request->user()->id,
             'body'         => $request->body,
         ]);
@@ -222,15 +222,15 @@ class ClientController extends Controller
     public function getComments($id)
     {
         return response()->json(
-            \App\Models\BriefComment::where('portfolio_id', $id)->with('user')->latest()->get()
+            \App\Models\BriefComment::where('brief_id', $id)->with('user')->latest()->get()
         );
     }
 
     public function toggleFavorite(Request $request, $id)
     {
-        $existing = \App\Models\BriefFavorite::where(['portfolio_id' => $id, 'user_id' => $request->user()->id])->first();
+        $existing = \App\Models\BriefFavorite::where(['brief_id' => $id, 'user_id' => $request->user()->id])->first();
         if ($existing) { $existing->delete(); return response()->json(['favorited' => false]); }
-        \App\Models\BriefFavorite::create(['portfolio_id' => $id, 'user_id' => $request->user()->id]);
+        \App\Models\BriefFavorite::create(['brief_id' => $id, 'user_id' => $request->user()->id]);
         return response()->json(['favorited' => true]);
     }
 
