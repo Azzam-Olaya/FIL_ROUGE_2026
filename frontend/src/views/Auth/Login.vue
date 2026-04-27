@@ -24,7 +24,7 @@
                 <h1 class="font-headline font-black italic text-4xl text-primary tracking-tight">MorLancer</h1>
               </router-link>
             </div>
-            <p class="font-headline text-on-surface-variant text-lg leading-relaxed">L'excellence de l'artisanat digital.</p>
+            <p class="font-headline text-on-surface-variant text-lg leading-relaxed">Connectez-vous à votre espace.</p>
           </div>
 
           <form @submit.prevent="handleLogin" class="w-full space-y-8">
@@ -61,27 +61,10 @@
           </form>
 
           <div class="mt-10 flex flex-col items-center gap-6 w-full">
-            <div class="flex items-center w-full gap-4">
-              <div class="h-[1px] flex-grow bg-outline-variant/20"></div>
-              <span class="text-xs uppercase tracking-tighter text-on-surface-variant/60 font-bold">Ou continuer avec</span>
-              <div class="h-[1px] flex-grow bg-outline-variant/20"></div>
-            </div>
-            
-            <div class="grid grid-cols-2 gap-4 w-full">
-              <button class="flex items-center justify-center gap-3 bg-surface-container-high py-3 px-6 rounded-full border border-outline-variant/10 hover:bg-surface-container-highest transition-all group active:scale-95">
-                <img alt="Google" class="w-5 h-5 group-hover:scale-110 transition-transform" src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png">
-                <span class="text-sm font-bold text-on-surface">Google</span>
-              </button>
-              <button class="flex items-center justify-center gap-3 bg-surface-container-high py-3 px-6 rounded-full border border-outline-variant/10 hover:bg-surface-container-highest transition-all group active:scale-95">
-                <span class="material-symbols-outlined text-on-surface group-hover:scale-110 transition-transform" style="font-variation-settings: 'FILL' 1;">terminal</span>
-                <span class="text-sm font-bold text-on-surface">Apple</span>
-              </button>
-            </div>
-
             <div class="text-center mt-4">
               <p class="text-on-surface-variant text-sm font-medium">
                 Nouveau sur MorLancer ? 
-                <router-link to="/register" class="text-secondary font-black ml-1 hover:underline underline-offset-4 decoration-secondary-container">Créer un compte artisan</router-link>
+                <router-link to="/register" class="text-secondary font-black ml-1 hover:underline underline-offset-4 decoration-secondary-container">Créer un compte</router-link>
               </p>
             </div>
           </div>
@@ -92,16 +75,16 @@
           <div class="flex flex-col items-center text-center p-4">
             <span class="material-symbols-outlined text-tertiary mb-2 text-3xl">verified_user</span>
             <h3 class="text-xs font-bold uppercase tracking-[0.2em] text-on-surface">Sécurisé</h3>
-            <p class="text-[10px] text-on-surface-variant mt-1 font-medium italic">Transactions protégées</p>
+            <p class="text-[10px] text-on-surface-variant mt-1 font-medium italic">Paiements escrow protégés</p>
           </div>
           <div class="flex flex-col items-center text-center p-4">
-            <span class="material-symbols-outlined text-tertiary mb-2 text-3xl">handyman</span>
-            <h3 class="text-xs font-bold uppercase tracking-[0.2em] text-on-surface">Artisanal</h3>
-            <p class="text-[10px] text-on-surface-variant mt-1 font-medium italic">Savoir-faire authentique</p>
+            <span class="material-symbols-outlined text-tertiary mb-2 text-3xl">handshake</span>
+            <h3 class="text-xs font-bold uppercase tracking-[0.2em] text-on-surface">Contrats auto</h3>
+            <p class="text-[10px] text-on-surface-variant mt-1 font-medium italic">Générés à l'accord</p>
           </div>
           <div class="flex flex-col items-center text-center p-4">
             <span class="material-symbols-outlined text-tertiary mb-2 text-3xl">support_agent</span>
-            <h3 class="text-xs font-bold uppercase tracking-[0.2em] text-on-surface">Support 24/7</h3>
+            <h3 class="text-xs font-bold uppercase tracking-[0.2em] text-on-surface">Support</h3>
             <p class="text-[10px] text-on-surface-variant mt-1 font-medium italic">Équipe à votre écoute</p>
           </div>
         </div>
@@ -109,7 +92,7 @@
     </main>
 
     <footer class="py-8 px-8 flex flex-col md:flex-row justify-between items-center text-[10px] uppercase tracking-[0.3em] text-on-surface-variant/40 gap-4 mt-auto">
-      <p>© 2024 MorLancer. L'excellence de l'artisanat digital.</p>
+      <p>© 2026 MorLancer. Tous droits réservés.</p>
       <div class="flex gap-8 font-bold">
         <a class="hover:text-on-surface transition-colors" href="#">Confidentialité</a>
         <a class="hover:text-on-surface transition-colors" href="#">Conditions</a>
